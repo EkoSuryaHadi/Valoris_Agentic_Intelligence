@@ -1,0 +1,15 @@
+create extension if not exists pgcrypto;
+create extension if not exists citext;
+create type project_status as enum ('DRAFT','ACTIVE','ON_HOLD','COMPLETED','CLOSED');
+create type approval_status as enum ('DRAFT','UNDER_REVIEW','SUBMITTED','APPROVED','REJECTED','LOCKED');
+create table organizations (id uuid primary key default gen_random_uuid(), name text not null, code text not null unique, created_at timestamptz not null default now());
+create table users (id uuid primary key default gen_random_uuid(), email citext not null unique, display_name text not null, created_at timestamptz not null default now());
+create table projects (id uuid primary key default gen_random_uuid(), organization_id uuid not null references organizations(id), code text not null, name text not null, currency char(3) not null, status project_status not null default 'DRAFT', created_at timestamptz not null default now(), updated_at timestamptz not null default now(), unique(organization_id,code));
+create table project_members (project_id uuid references projects(id), user_id uuid references users(id), role text not null, primary key(project_id,user_id));
+create table wbs_nodes (id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id), parent_id uuid references wbs_nodes(id), code text not null, name text not null, level int not null check(level>0), unique(project_id,code));
+create table cost_codes (id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id), code text not null, name text not null, unique(project_id,code));
+create table baselines (id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id), version int not null, status approval_status not null default 'DRAFT', bac numeric(20,2) not null default 0 check(bac>=0), unique(project_id,version));
+create table budget_lines (id uuid primary key default gen_random_uuid(), baseline_id uuid not null references baselines(id), wbs_id uuid not null references wbs_nodes(id), cost_code_id uuid not null references cost_codes(id), amount numeric(20,2) not null check(amount>=0));
+create table reporting_periods (id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id), period_start date not null, period_end date not null, status approval_status not null default 'DRAFT', unique(project_id,period_start), check(period_end>=period_start));
+create table audit_events (id uuid primary key default gen_random_uuid(), organization_id uuid not null references organizations(id), project_id uuid references projects(id), actor_user_id uuid references users(id), actor_type text not null, action text not null, entity_type text not null, entity_id uuid, old_value jsonb, new_value jsonb, reason text, source_ref text, created_at timestamptz not null default now());
+create index audit_project_created on audit_events(project_id,created_at);

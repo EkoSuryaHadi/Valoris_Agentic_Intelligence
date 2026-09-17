@@ -1,0 +1,27 @@
+openapi: 3.0.3
+info:
+  title: VALORIS API
+  version: 1.0.0
+servers: [{url: /api/v1}]
+security: [{bearerAuth: []}]
+paths:
+  /projects:
+    get: {summary: List tenant-scoped projects, responses: {'200': {description: OK}}}
+    post: {summary: Create project, responses: {'201': {description: Created}}}
+  /projects/{projectId}/wbs:
+    get: {summary: List WBS nodes, responses: {'200': {description: OK}}}
+    post: {summary: Create WBS node, responses: {'201': {description: Created}}}
+  /projects/{projectId}/baselines:
+    get: {summary: List baseline versions, responses: {'200': {description: OK}}}
+    post: {summary: Create baseline draft, responses: {'201': {description: Created}}}
+  /baselines/{baselineId}/approve:
+    post: {summary: Human approval; requires role, version and audit reason, responses: {'200': {description: Approved}}}
+  /projects/{projectId}/cost-summary:
+    get: {summary: Reconciled BAC/current budget/commitment/AC/ETC/EAC/VAC, responses: {'200': {description: OK}}}
+  /projects/{projectId}/agent-findings:
+    get: {summary: Evidence-linked findings, responses: {'200': {description: OK}}}
+  /agent-findings/{findingId}/review:
+    post: {summary: Human disposition; never auto-approves source data, responses: {'200': {description: Reviewed}}}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}
