@@ -32,3 +32,10 @@ venv/
 *.tmp
 *.swp
 work/
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+.next/
+coverage/
