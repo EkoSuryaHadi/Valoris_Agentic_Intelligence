@@ -1,0 +1,6 @@
+{
+  "name": "valoris-agentic-intelligence",
+  "private": true,
+  "type": "module",
+  "scripts": {"test:domain": "node --test packages/domain/test/*.test.js"}
+}
