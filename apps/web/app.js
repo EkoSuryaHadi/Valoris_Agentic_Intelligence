@@ -59,6 +59,9 @@ function startWorkspace(documentRef) {
   const importSummary = documentRef.querySelector('[data-import-preview-summary]');
   const importFile = documentRef.querySelector('[data-import-file]');
   const importStepperFeedback = documentRef.querySelector('[data-import-stepper-feedback]');
+  const commitmentForm = documentRef.querySelector('[data-commitment-form]');
+  const actualCostForm = documentRef.querySelector('[data-actual-cost-form]');
+  const transactionFeedback = documentRef.querySelector('[data-transaction-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -165,6 +168,25 @@ function startWorkspace(documentRef) {
         if (reviewFeedback) reviewFeedback.textContent = error.message || 'The baseline decision could not be recorded.';
       }
     });
+    commitmentForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (transactionFeedback) transactionFeedback.textContent = 'Choose an authorized project before recording a commitment.'; return; }
+      const data = new FormData(commitmentForm);
+      const payload = { referenceNo: data.get('referenceNo')?.trim(), vendor: data.get('vendor')?.trim(), amount: Number(data.get('amount')) };
+      if (!payload.referenceNo || !payload.vendor || !Number.isFinite(payload.amount) || payload.amount < 0) { if (transactionFeedback) transactionFeedback.textContent = 'Reference, vendor, and a non-negative amount are required.'; return; }
+      if (transactionFeedback) transactionFeedback.textContent = 'Saving commitment…';
+      try { await client.createCommitment(activeProject.id, payload, globalThis.crypto?.randomUUID?.()); commitmentForm.reset(); if (transactionFeedback) transactionFeedback.textContent = 'Commitment saved with source trace.'; } catch (error) { if (transactionFeedback) transactionFeedback.textContent = error.message || 'The commitment could not be saved.'; }
+    });
+    actualCostForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (transactionFeedback) transactionFeedback.textContent = 'Choose an authorized project before posting actual cost.'; return; }
+      const data = new FormData(actualCostForm);
+      const periodId = data.get('periodId')?.trim();
+      const payload = { sourceRef: data.get('sourceRef')?.trim(), amount: Number(data.get('amount')) };
+      if (!periodId || !payload.sourceRef || !Number.isFinite(payload.amount) || payload.amount < 0) { if (transactionFeedback) transactionFeedback.textContent = 'Period, source reference, and a non-negative amount are required.'; return; }
+      if (transactionFeedback) transactionFeedback.textContent = 'Posting actual cost…';
+      try { await client.postActualCost(periodId, payload, globalThis.crypto?.randomUUID?.()); actualCostForm.reset(); if (transactionFeedback) transactionFeedback.textContent = 'Actual cost posted to the open period.'; } catch (error) { if (transactionFeedback) transactionFeedback.textContent = error.message || 'The actual cost could not be posted.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -210,6 +232,8 @@ function startWorkspace(documentRef) {
     reviewButton?.addEventListener('click', () => reviewForm?.classList.remove('is-hidden'));
     reviewForm?.addEventListener('submit', (event) => { event.preventDefault(); if (reviewFeedback) reviewFeedback.textContent = 'Connect to an authorized project workspace to record a baseline decision.'; });
     importForm?.addEventListener('submit', (event) => { event.preventDefault(); if (importFeedback) importFeedback.textContent = 'Connect to an authorized project workspace to preview import rows.'; });
+    commitmentForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to record a commitment.'; });
+    actualCostForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to post actual cost.'; });
   }
 }
 
