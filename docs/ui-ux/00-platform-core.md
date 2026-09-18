@@ -37,3 +37,5 @@ Every empty state should explain why it is empty, what prerequisite is missing, 
 ## Phase 10 implementation baseline
 
 The MVP-A web shell is implemented in `apps/web` with an industrial-editorial visual direction: warm paper surfaces, ink navy navigation, amber action signals, and dense evidence-first tables. The shell includes Overview, WBS/CBS, Baseline, Import Center, and Audit Trail views. It is a workspace UI, not a chatbot surface; later API wiring must preserve organization/project context, role boundaries, source freshness, and human approval states.
+
+The shell now supports progressive live-data hydration through `apps/web/api-client.js`. A trusted host may provide `globalThis.VALORIS_API_CONFIG` with `baseUrl`, `projectId`, and a `tokenProvider` function; the browser never persists bearer tokens in the DOM or web storage. Without that runtime configuration, the review shell stays in demo-data mode.
