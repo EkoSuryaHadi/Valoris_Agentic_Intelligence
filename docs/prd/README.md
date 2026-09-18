@@ -23,4 +23,25 @@ MVP-D: executive dashboard, reporting, administration, audit trail hardening.
 
 `BAC = sum(approved baseline budget lines)`; `Current Budget = BAC + incorporated approved changes`; `EAC = AC + ETC`; `VAC = BAC - EAC`; `Exposure = probability × impact`; `PV = BAC × planned progress`; `EV = BAC × approved physical progress`; `CV = EV - AC`; `SV = EV - PV`; `CPI = EV / AC`; `SPI = EV / PV` (null when denominator is zero).
 
+## Implementation traceability policy
+
+Every code, API, database, UI, agentic, security, or deployment change must update the affected PRD/specification in the same commit. Each implementation commit must identify the relevant phase/module, acceptance behavior, and test evidence. PRD changes must not silently alter source-of-truth rules, approval guardrails, formulas, or Human-in-the-Loop requirements.
+
+## Current implementation map
+
+| Capability | Status | Canonical evidence |
+|---|---|---|
+| Domain calculations and guardrails | Implemented | `packages/domain`, domain tests |
+| Project/WBS/CBS/Baseline API adapters | Implemented | `packages/api`, API tests |
+| Commitment/Actual/Accrual adapters | Implemented | `packages/api/src/transactions.js` |
+| Forecast/EVM/Change/Cash/Risk adapters | Implemented | API adapters and module scopes |
+| Agent findings and import preview | Implemented | `packages/api/src/agent-import.js` |
+| Executive reporting adapter | Implemented | `packages/api/src/reporting.js` |
+| PostgreSQL pool and project repository | Foundation implemented | `packages/db`, runtime tests |
+| Frontend runtime | Planned | UI/UX specifications |
+| Provider-backed JWT/JWKS verification | Planned | Security implementation backlog |
+| Full CRUD repositories and E2E | Planned | Phase 9 hardening backlog |
+
+The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
+
 Planned modules include Platform Core, Cost Management, Forecast Intelligence, Earned Value Management, Change Management, Risk-to-Cost Intelligence, Procurement Cost Intelligence, Data Quality & Reconciliation, Executive Intelligence, Agentic Command Center, and Reporting & Analytics.
