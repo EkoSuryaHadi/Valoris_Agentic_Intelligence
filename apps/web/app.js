@@ -1,4 +1,5 @@
 import { createApiClient } from './api-client.js';
+import { selectActiveProject } from './project-context.js';
 
 function renderRows(container, rows, render) {
   if (!container || !Array.isArray(rows)) return;
@@ -44,10 +45,28 @@ function startWorkspace(documentRef) {
   navigate(window.location.hash.slice(1) || 'overview');
   const config = globalThis.VALORIS_API_CONFIG;
   const runtimeStatus = documentRef.querySelector('[data-runtime-status]');
-  if (config?.baseUrl && config?.projectId && typeof config.tokenProvider === 'function') {
-    hydrateMvpA({ client: createApiClient(config), projectId: config.projectId, documentRef })
-      .then(() => { if (runtimeStatus) runtimeStatus.textContent = 'Live project data'; })
-      .catch(() => { if (runtimeStatus) runtimeStatus.textContent = 'Demo data — live connection unavailable'; });
+  if (config?.baseUrl && typeof config.tokenProvider === 'function') {
+    const client = createApiClient(config);
+    const selector = documentRef.querySelector('[data-project-selector]');
+    const projectName = documentRef.querySelector('[data-project-name]');
+    const activate = async (project) => {
+      if (!project) return;
+      if (projectName) projectName.textContent = project.name;
+      if (selector) selector.value = project.id;
+      await hydrateMvpA({ client, projectId: project.id, documentRef });
+      if (runtimeStatus) runtimeStatus.textContent = 'Live project data';
+    };
+    client.listProjects().then(async (projects) => {
+      const active = selectActiveProject(projects, config.projectId);
+      if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
+      if (selector) {
+        selector.replaceChildren(...projects.map((project) => {
+          const option = documentRef.createElement('option'); option.value = project.id; option.textContent = project.name; return option;
+        }));
+        selector.addEventListener('change', () => activate(selectActiveProject(projects, selector.value)));
+      }
+      await activate(active);
+    }).catch(() => { if (runtimeStatus) runtimeStatus.textContent = 'Demo data — live connection unavailable'; });
   }
 }
 
