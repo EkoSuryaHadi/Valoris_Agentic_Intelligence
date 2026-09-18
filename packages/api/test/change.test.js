@@ -9,7 +9,7 @@ test('creates a change response with weighted exposure', () => {
 });
 
 test('allows incorporation only after human approval', () => {
-  const denied = incorporateChangeResponse({ user: { organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }, project: { id: 'p1', organizationId: 'o1' }, change: { projectId: 'p1', status: 'PENDING', approvedCost: 100 }, idempotencyKey: 'c-2' });
+  const denied = incorporateChangeResponse({ user: { organizationId: 'o1', projectId: 'p1', role: 'COST_MANAGER' }, project: { id: 'p1', organizationId: 'o1' }, change: { projectId: 'p1', status: 'PENDING', approvedCost: 100 }, idempotencyKey: 'c-2' });
   assert.equal(denied.status, 422);
   const ok = incorporateChangeResponse({ user: { organizationId: 'o1', projectId: 'p1', role: 'COST_MANAGER' }, project: { id: 'p1', organizationId: 'o1' }, change: { projectId: 'p1', status: 'APPROVED', approvedCost: 100 }, idempotencyKey: 'c-3' });
   assert.equal(ok.status, 200);
