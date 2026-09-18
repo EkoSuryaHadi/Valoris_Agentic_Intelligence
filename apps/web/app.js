@@ -57,6 +57,9 @@ function startWorkspace(documentRef) {
   const importForm = documentRef.querySelector('[data-import-preview-form]');
   const importFeedback = documentRef.querySelector('[data-import-preview-feedback]');
   const importSummary = documentRef.querySelector('[data-import-preview-summary]');
+  let previewRows;
+  const importCommitButton = importForm ? documentRef.createElement('button') : null;
+  if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
   const setWbsFormOpen = (open) => {
     if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
     if (!open && wbsFeedback) wbsFeedback.textContent = '';
@@ -152,12 +155,24 @@ function startWorkspace(documentRef) {
         if (!Array.isArray(rows)) throw new Error('Rows JSON must be an array.');
         if (importFeedback) importFeedback.textContent = 'Validating rows…';
         const result = await client.previewImport(activeProject.id, { rows });
+        previewRows = result.errors.length === 0 ? rows : undefined;
+        if (importCommitButton) importCommitButton.disabled = !previewRows;
         if (importFeedback) importFeedback.textContent = `Preview ready: ${result.valid.length} valid, ${result.errors.length} errors.`;
         if (importSummary) importSummary.textContent = `${result.total} total rows · ${result.valid.length} ready · ${result.errors.length} need attention`;
       } catch (error) {
         if (importFeedback) importFeedback.textContent = error.message || 'Import preview failed.';
         if (importSummary) importSummary.textContent = '';
       }
+    });
+    importCommitButton?.addEventListener('click', async () => {
+      if (!previewRows || !activeProject) return;
+      if (importFeedback) importFeedback.textContent = 'Committing validated rows…';
+      try {
+        const result = await client.commitImport(activeProject.id, { rows: previewRows }, globalThis.crypto?.randomUUID?.());
+        if (importFeedback) importFeedback.textContent = `${result.importedCount} rows committed with audit trace.`;
+        previewRows = undefined;
+        importCommitButton.disabled = true;
+      } catch (error) { if (importFeedback) importFeedback.textContent = error.message || 'Import commit failed.'; }
     });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);

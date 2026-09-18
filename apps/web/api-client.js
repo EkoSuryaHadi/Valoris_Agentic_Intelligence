@@ -28,7 +28,8 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     getBaselines: (projectId) => request(projectPath(projectId, 'baselines')),
     createBaseline: (projectId, body, idempotencyKey) => request(projectPath(projectId, 'baselines'), { method: 'POST', body, idempotencyKey }),
     createBudgetLine: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/lines`, { method: 'POST', body, idempotencyKey }),
-    transitionBaseline: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/transition`, { method: 'POST', body, idempotencyKey })
-    ,previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body })
+    transitionBaseline: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/transition`, { method: 'POST', body, idempotencyKey }),
+    previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body }),
+    commitImport: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/imports/commit`, { method: 'POST', body, idempotencyKey })
   };
 }
