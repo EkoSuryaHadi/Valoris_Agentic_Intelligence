@@ -10,7 +10,8 @@ test('project query always scopes by organization', () => {
 
 test('transaction query scopes by organization and project', () => {
   const query = scopedTransactionQuery('actual_costs', 'org-1', 'project-1');
-  assert.match(query.text, /organization_id = \$1/);
+  assert.match(query.text, /join projects/i);
+  assert.match(query.text, /projects\.organization_id = \$1/);
   assert.match(query.text, /project_id = \$2/);
   assert.deepEqual(query.values, ['org-1', 'project-1']);
 });

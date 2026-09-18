@@ -6,5 +6,5 @@ export function projectListQuery(organizationId) {
 export function scopedTransactionQuery(table, organizationId, projectId) {
   if (!TABLES.has(table)) throw new Error('unsafe or unsupported table name');
   if (!organizationId?.trim() || !projectId?.trim()) throw new Error('organization and project are required');
-  return { text: `select * from ${table} where organization_id = $1 and project_id = $2 order by created_at desc`, values: [organizationId, projectId] };
+  return { text: `select ${table}.* from ${table} join projects on projects.id = ${table}.project_id where projects.organization_id = $1 and ${table}.project_id = $2 order by ${table}.id desc`, values: [organizationId, projectId] };
 }

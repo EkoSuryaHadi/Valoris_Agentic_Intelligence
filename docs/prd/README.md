@@ -43,6 +43,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Full CRUD repositories and E2E | Planned | Phase 9 hardening backlog |
 | WBS/CBS, baseline-line, and actual-cost repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
 | Commitment, accrual, and forecast repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
+| Tenant-safe transaction reads and forecast migration | Implemented | `packages/db/src/queries.js`, `database/migrations/005_phase3_forecast.sql` |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
