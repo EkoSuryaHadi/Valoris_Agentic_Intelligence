@@ -11,5 +11,7 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(html, /data-add-wbs-node/);
   assert.match(html, /data-wbs-form/);
   assert.match(html, /data-wbs-feedback/);
+  assert.match(html, /data-create-baseline/);
+  assert.match(html, /data-baseline-feedback/);
   assert.doesNotMatch(html, /chatbot|chat with/i);
 });

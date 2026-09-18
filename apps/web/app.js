@@ -45,6 +45,8 @@ function startWorkspace(documentRef) {
   navigate(window.location.hash.slice(1) || 'overview');
   const wbsForm = documentRef.querySelector('[data-wbs-form]');
   const wbsFeedback = documentRef.querySelector('[data-wbs-feedback]');
+  const baselineFeedback = documentRef.querySelector('[data-baseline-feedback]');
+  const baselineButton = documentRef.querySelector('[data-create-baseline]');
   const setWbsFormOpen = (open) => {
     if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
     if (!open && wbsFeedback) wbsFeedback.textContent = '';
@@ -82,6 +84,17 @@ function startWorkspace(documentRef) {
         if (wbsFeedback) wbsFeedback.textContent = error.message || 'The WBS node could not be created.';
       }
     });
+    baselineButton?.addEventListener('click', async () => {
+      if (!activeProject) { if (baselineFeedback) baselineFeedback.textContent = 'Choose an authorized project before creating a baseline.'; return; }
+      if (baselineFeedback) baselineFeedback.textContent = 'Creating draft baseline…';
+      try {
+        await client.createBaseline(activeProject.id, {}, globalThis.crypto?.randomUUID?.());
+        await activate(activeProject);
+        if (baselineFeedback) baselineFeedback.textContent = 'Draft baseline created. Review its budget lines before submission.';
+      } catch (error) {
+        if (baselineFeedback) baselineFeedback.textContent = error.message || 'The baseline draft could not be created.';
+      }
+    });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);
       if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
@@ -95,6 +108,7 @@ function startWorkspace(documentRef) {
     }).catch(() => { if (runtimeStatus) runtimeStatus.textContent = 'Demo data — live connection unavailable'; });
   } else {
     wbsForm?.addEventListener('submit', (event) => { event.preventDefault(); if (wbsFeedback) wbsFeedback.textContent = 'Connect to an authorized project workspace to create a WBS node.'; });
+    baselineButton?.addEventListener('click', () => { if (baselineFeedback) baselineFeedback.textContent = 'Connect to an authorized project workspace to create a baseline draft.'; });
   }
 }
 
