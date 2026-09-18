@@ -57,6 +57,8 @@ function startWorkspace(documentRef) {
   const importForm = documentRef.querySelector('[data-import-preview-form]');
   const importFeedback = documentRef.querySelector('[data-import-preview-feedback]');
   const importSummary = documentRef.querySelector('[data-import-preview-summary]');
+  const importFile = documentRef.querySelector('[data-import-file]');
+  const importStepperFeedback = documentRef.querySelector('[data-import-stepper-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -78,6 +80,22 @@ function startWorkspace(documentRef) {
     const projectName = documentRef.querySelector('[data-project-name]');
     let activeProject;
     let activeBaseline;
+    importFile?.addEventListener('change', async () => {
+      const file = importFile.files?.[0];
+      if (!file) return;
+      try {
+        const [headerLine, ...dataLines] = (await file.text()).trim().split(/\r?\n/);
+        const headers = headerLine.split(',').map((header) => header.trim());
+        const referenceKey = documentRef.querySelector('[data-import-mapping="referenceNo"]')?.value || 'referenceNo';
+        const amountKey = documentRef.querySelector('[data-import-mapping="amount"]')?.value || 'amount';
+        const referenceIndex = headers.indexOf(referenceKey); const amountIndex = headers.indexOf(amountKey);
+        if (referenceIndex < 0 || amountIndex < 0) throw new Error('Map reference and amount columns before loading the file.');
+        const rows = dataLines.filter(Boolean).map((line) => { const values = line.split(','); return { referenceNo: values[referenceIndex]?.trim(), amount: values[amountIndex]?.trim(), projectId: activeProject?.id }; });
+        const rowsField = importForm?.querySelector('textarea[name="rows"]');
+        if (rowsField) rowsField.value = JSON.stringify(rows, null, 2);
+        if (importStepperFeedback) importStepperFeedback.textContent = `${rows.length} rows loaded. Review mapping, then run validation.`;
+      } catch (error) { if (importStepperFeedback) importStepperFeedback.textContent = error.message || 'Could not read CSV file.'; }
+    });
     const activate = async (project) => {
       if (!project) return;
       activeProject = project;
