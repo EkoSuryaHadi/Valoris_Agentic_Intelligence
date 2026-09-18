@@ -25,6 +25,7 @@ export async function hydrateMvpA({ client, projectId, documentRef = document })
     row.append(textCell(documentRef, `v${baseline.version}`), textCell(documentRef, baseline.status));
     return row;
   });
+  return { wbs, baselines };
 }
 
 function startWorkspace(documentRef) {
@@ -47,12 +48,17 @@ function startWorkspace(documentRef) {
   const wbsFeedback = documentRef.querySelector('[data-wbs-feedback]');
   const baselineFeedback = documentRef.querySelector('[data-baseline-feedback]');
   const baselineButton = documentRef.querySelector('[data-create-baseline]');
+  const budgetLineButton = documentRef.querySelector('[data-add-budget-line]');
+  const budgetLineForm = documentRef.querySelector('[data-budget-line-form]');
+  const budgetLineFeedback = documentRef.querySelector('[data-budget-line-feedback]');
   const setWbsFormOpen = (open) => {
     if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
     if (!open && wbsFeedback) wbsFeedback.textContent = '';
   };
   documentRef.querySelector('[data-add-wbs-node]')?.addEventListener('click', () => setWbsFormOpen(true));
   documentRef.querySelector('[data-cancel-wbs-node]')?.addEventListener('click', () => setWbsFormOpen(false));
+  budgetLineButton?.addEventListener('click', () => budgetLineForm?.classList.remove('is-hidden'));
+  documentRef.querySelector('[data-cancel-budget-line]')?.addEventListener('click', () => budgetLineForm?.classList.add('is-hidden'));
   const config = globalThis.VALORIS_API_CONFIG;
   const runtimeStatus = documentRef.querySelector('[data-runtime-status]');
   if (config?.baseUrl && typeof config.tokenProvider === 'function') {
@@ -60,12 +66,14 @@ function startWorkspace(documentRef) {
     const selector = documentRef.querySelector('[data-project-selector]');
     const projectName = documentRef.querySelector('[data-project-name]');
     let activeProject;
+    let activeBaseline;
     const activate = async (project) => {
       if (!project) return;
       activeProject = project;
       if (projectName) projectName.textContent = project.name;
       if (selector) selector.value = project.id;
-      await hydrateMvpA({ client, projectId: project.id, documentRef });
+      const hydrated = await hydrateMvpA({ client, projectId: project.id, documentRef });
+      activeBaseline = hydrated.baselines.find((baseline) => baseline.status === 'DRAFT') || hydrated.baselines[0];
       if (runtimeStatus) runtimeStatus.textContent = 'Live project data';
     };
     wbsForm?.addEventListener('submit', async (event) => {
@@ -95,6 +103,22 @@ function startWorkspace(documentRef) {
         if (baselineFeedback) baselineFeedback.textContent = error.message || 'The baseline draft could not be created.';
       }
     });
+    budgetLineForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeBaseline) { if (budgetLineFeedback) budgetLineFeedback.textContent = 'Create or select a baseline before adding a budget line.'; return; }
+      const data = new FormData(budgetLineForm);
+      const amount = Number(data.get('amount'));
+      const payload = { wbsId: data.get('wbsId')?.trim(), costCodeId: data.get('costCodeId')?.trim(), amount };
+      if (!payload.wbsId || !payload.costCodeId || !Number.isFinite(amount) || amount < 0) { if (budgetLineFeedback) budgetLineFeedback.textContent = 'WBS ID, cost code ID, and a non-negative amount are required.'; return; }
+      if (budgetLineFeedback) budgetLineFeedback.textContent = 'Adding budget line…';
+      try {
+        await client.createBudgetLine(activeBaseline.id, payload, globalThis.crypto?.randomUUID?.());
+        if (budgetLineFeedback) budgetLineFeedback.textContent = 'Budget line added to the open baseline.';
+        budgetLineForm.reset();
+      } catch (error) {
+        if (budgetLineFeedback) budgetLineFeedback.textContent = error.message || 'The budget line could not be added.';
+      }
+    });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);
       if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
@@ -109,6 +133,7 @@ function startWorkspace(documentRef) {
   } else {
     wbsForm?.addEventListener('submit', (event) => { event.preventDefault(); if (wbsFeedback) wbsFeedback.textContent = 'Connect to an authorized project workspace to create a WBS node.'; });
     baselineButton?.addEventListener('click', () => { if (baselineFeedback) baselineFeedback.textContent = 'Connect to an authorized project workspace to create a baseline draft.'; });
+    budgetLineForm?.addEventListener('submit', (event) => { event.preventDefault(); if (budgetLineFeedback) budgetLineFeedback.textContent = 'Connect to an authorized project workspace to add a budget line.'; });
   }
 }
 

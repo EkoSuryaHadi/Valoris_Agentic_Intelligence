@@ -14,6 +14,8 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(html, /data-wbs-feedback/);
   assert.match(html, /data-create-baseline/);
   assert.match(html, /data-baseline-feedback/);
+  assert.match(html, /data-budget-line-form/);
+  assert.match(html, /data-budget-line-feedback/);
   assert.doesNotMatch(html, /chatbot|chat with/i);
   assert.match(css, /--sidebar:\s*#0F172A/i);
   assert.match(css, /--canvas:\s*#F8FAFC/i);
