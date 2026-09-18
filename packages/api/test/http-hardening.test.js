@@ -131,3 +131,15 @@ test('API server approves a submitted baseline only with human audit reason', as
   assert.equal((await response.json()).data.status, 'APPROVED');
   assert.equal(baselineStore[0].status, 'APPROVED');
 });
+
+test('API server previews import rows without committing invalid data', async (t) => {
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }]
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/projects/p1/imports/preview`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'content-type': 'application/json' }, body: JSON.stringify({ rows: [{ referenceNo: 'PO-1', amount: '10', projectId: 'p1' }, { referenceNo: 'PO-1', amount: 'bad', projectId: 'p1' }] }) });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.errors.length, 1);
+});

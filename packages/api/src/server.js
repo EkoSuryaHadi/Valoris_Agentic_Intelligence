@@ -2,6 +2,7 @@ import { createServer } from 'node:http';
 import { createProjectResponse } from './projects.js';
 import { createHierarchyResponse } from './hierarchy.js';
 import { createBaselineResponse, createBudgetLineResponse, transitionBaselineResponse } from './baseline.js';
+import { validateImportResponse } from './agent-import.js';
 import { authenticateRequest } from './auth.js';
 import { createRateLimiter, parseJsonBody } from './http-hardening.js';
 import { getRequestId } from './http-hardening.js';
@@ -35,6 +36,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
     const baselineMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/baselines$/);
     const lineMatch = writeUrl.pathname.match(/^\/api\/v1\/baselines\/([^/]+)\/lines$/);
     const transitionMatch = writeUrl.pathname.match(/^\/api\/v1\/baselines\/([^/]+)\/transition$/);
+    const importPreviewMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/imports\/preview$/);
     if (request.method === 'POST' && wbsMatch) {
       try {
         const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
@@ -53,6 +55,21 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const code = error.code || 'UNAUTHENTICATED';
         const message = status === 401 ? 'valid bearer authentication is required' : error.message;
         response.writeHead(status); response.end(JSON.stringify({ error: { code, message } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status });
+      }
+      return;
+    }
+    if (request.method === 'POST' && importPreviewMatch) {
+      try {
+        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
+        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
+        const parsed = await parseJsonBody(request, bodyLimitBytes);
+        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
+        const project = projectStore.find((candidate) => candidate.id === importPreviewMatch[1]);
+        const result = validateImportResponse({ user, project, body: parsed });
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
+      } catch (error) {
+        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
+        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
       }
       return;
     }

@@ -23,6 +23,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Started migration to the approved VALORIS UI/UX Design Specification v1.0. Related PRD: UI/UX and Platform Core. Acceptance: shell tokens use the specified navy sidebar, cool canvas, white cards, indigo primary, semantic colors, 8–12px geometry, and compact financial typography.
 - Added the MVP-A budget-line entry workspace. Related PRD: Cost Baseline and UI/UX. Acceptance: a human enters WBS, cost-code, and non-negative amount values, submits against the active open baseline, and receives inline validation or API feedback.
 - Added the MVP-A baseline review workflow. Related PRD: Cost Baseline, Access Control, API, and UI/UX. Acceptance: approval and locking use valid state transitions, role capability checks, project scope, idempotency, and a required audit reason before persistence.
+- Added the MVP-A Import Center preview flow. Related PRD: Import Center, API, and UI/UX. Acceptance: operators submit source rows for validation, see valid/error/total results, and no financial records are committed during preview.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.

@@ -54,6 +54,9 @@ function startWorkspace(documentRef) {
   const reviewButton = documentRef.querySelector('[data-review-baseline]');
   const reviewForm = documentRef.querySelector('[data-review-form]');
   const reviewFeedback = documentRef.querySelector('[data-review-feedback]');
+  const importForm = documentRef.querySelector('[data-import-preview-form]');
+  const importFeedback = documentRef.querySelector('[data-import-preview-feedback]');
+  const importSummary = documentRef.querySelector('[data-import-preview-summary]');
   const setWbsFormOpen = (open) => {
     if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
     if (!open && wbsFeedback) wbsFeedback.textContent = '';
@@ -141,6 +144,21 @@ function startWorkspace(documentRef) {
         if (reviewFeedback) reviewFeedback.textContent = error.message || 'The baseline decision could not be recorded.';
       }
     });
+    importForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
+      try {
+        const rows = JSON.parse(new FormData(importForm).get('rows'));
+        if (!Array.isArray(rows)) throw new Error('Rows JSON must be an array.');
+        if (importFeedback) importFeedback.textContent = 'Validating rows…';
+        const result = await client.previewImport(activeProject.id, { rows });
+        if (importFeedback) importFeedback.textContent = `Preview ready: ${result.valid.length} valid, ${result.errors.length} errors.`;
+        if (importSummary) importSummary.textContent = `${result.total} total rows · ${result.valid.length} ready · ${result.errors.length} need attention`;
+      } catch (error) {
+        if (importFeedback) importFeedback.textContent = error.message || 'Import preview failed.';
+        if (importSummary) importSummary.textContent = '';
+      }
+    });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);
       if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
@@ -158,6 +176,7 @@ function startWorkspace(documentRef) {
     budgetLineForm?.addEventListener('submit', (event) => { event.preventDefault(); if (budgetLineFeedback) budgetLineFeedback.textContent = 'Connect to an authorized project workspace to add a budget line.'; });
     reviewButton?.addEventListener('click', () => reviewForm?.classList.remove('is-hidden'));
     reviewForm?.addEventListener('submit', (event) => { event.preventDefault(); if (reviewFeedback) reviewFeedback.textContent = 'Connect to an authorized project workspace to record a baseline decision.'; });
+    importForm?.addEventListener('submit', (event) => { event.preventDefault(); if (importFeedback) importFeedback.textContent = 'Connect to an authorized project workspace to preview import rows.'; });
   }
 }
 
