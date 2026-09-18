@@ -47,3 +47,22 @@ test('API server returns stable hardening responses for protected writes', async
   assert.equal(limited.status, 429);
   assert.equal(events.every((event) => !('authorization' in event) && !('body' in event)), true);
 });
+
+test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }, { id: 'p2', organizationId: 'o2', code: 'P-2', name: 'Other' }],
+    wbsStore: [{ id: 'w1', projectId: 'p1', code: '01', name: 'Site', level: 1 }],
+    baselineStore: [{ id: 'b1', projectId: 'p1', version: 2, status: 'APPROVED' }]
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: 'Bearer verified-token' };
+  const projects = await fetch(`${base}/api/v1/projects`, { headers });
+  assert.deepEqual((await projects.json()).data, [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }]);
+  const wbs = await fetch(`${base}/api/v1/projects/p1/wbs`, { headers });
+  assert.deepEqual((await wbs.json()).data, [{ id: 'w1', projectId: 'p1', code: '01', name: 'Site', level: 1 }]);
+  const baselines = await fetch(`${base}/api/v1/projects/p1/baselines`, { headers });
+  assert.deepEqual((await baselines.json()).data, [{ id: 'b1', projectId: 'p1', version: 2, status: 'APPROVED' }]);
+});

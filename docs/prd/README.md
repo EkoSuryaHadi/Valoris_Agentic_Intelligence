@@ -39,6 +39,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Executive reporting adapter | Implemented | `packages/api/src/reporting.js` |
 | PostgreSQL pool and project repository | Foundation implemented | `packages/db`, runtime tests |
 | Frontend runtime MVP-A shell | Implemented | `apps/web/index.html`, `apps/web/styles.css`, `apps/web/app.js` |
+| MVP-A read API boundary | Implemented | `packages/api/src/server.js`; tenant-scoped projects plus project-scoped WBS/baseline reads |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |
 | Request correlation and rate-limit store boundary | Implemented | `x-request-id` correlation, injectable limiter store, and audit-safe structured request events |

@@ -6,13 +6,13 @@ servers: [{url: /api/v1}]
 security: [{bearerAuth: []}]
 paths:
   /projects:
-    get: {summary: List tenant-scoped projects, responses: {'200': {description: OK}}}
+    get: {summary: List tenant-scoped projects, responses: {'200': {description: OK}, '401': {description: Unauthenticated}}}
     post: {summary: Create project, responses: {'201': {description: Created}}}
   /projects/{projectId}/wbs:
-    get: {summary: List WBS nodes, responses: {'200': {description: OK}}}
+    get: {summary: List project-scoped WBS nodes, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create WBS node, responses: {'201': {description: Created}}}
   /projects/{projectId}/baselines:
-    get: {summary: List baseline versions, responses: {'200': {description: OK}}}
+    get: {summary: List project-scoped baseline versions, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create baseline draft, responses: {'201': {description: Created}}}
   /baselines/{baselineId}/approve:
     post: {summary: Human approval; requires role, version and audit reason, responses: {'200': {description: Approved}}}
