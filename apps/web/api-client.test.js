@@ -17,3 +17,13 @@ test('API client returns the backend error contract', async () => {
   const client = createApiClient({ baseUrl: '/api/v1', tokenProvider: () => 'token', fetcher: async () => ({ ok: false, status: 403, json: async () => ({ error: { code: 'PROJECT_SCOPE_DENIED', message: 'project scope is not authorized' } }) }) });
   await assert.rejects(() => client.getBaselines('p1'), (error) => error.status === 403 && error.code === 'PROJECT_SCOPE_DENIED');
 });
+
+test('API client exposes commitment and actual cost writes', async () => {
+  const calls = [];
+  const client = createApiClient({ baseUrl: '/api/v1', fetcher: async (url, options) => { calls.push({ url, options }); return { ok: true, status: 201, json: async () => ({ data: { id: 'tx-1' } }) }; } });
+  await client.createCommitment('p1', { referenceNo: 'PO-2', vendor: 'Steel Co', amount: 2500 }, 'commitment-1');
+  await client.postActualCost('r1', { sourceRef: 'INV-2', amount: 1200 }, 'actual-1');
+  assert.equal(calls[0].url, '/api/v1/projects/p1/commitments');
+  assert.equal(calls[1].url, '/api/v1/periods/r1/actual-costs');
+  assert.equal(calls[1].options.headers['Idempotency-Key'], 'actual-1');
+});

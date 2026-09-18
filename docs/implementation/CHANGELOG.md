@@ -26,6 +26,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the MVP-A Import Center preview flow. Related PRD: Import Center, API, and UI/UX. Acceptance: operators submit source rows for validation, see valid/error/total results, and no financial records are committed during preview.
 - Added the MVP-A Import Center commit flow. Related PRD: Import Center, API, Database, and Audit. Acceptance: only fully valid previews can be committed, the action requires human confirmation and idempotency, and invalid batches are rejected without partial persistence.
 - Added the MVP-A Import Center upload and mapping stepper. Related PRD: Import Center and UI/UX. Acceptance: CSV rows can be loaded, reference and amount columns mapped, and handed to validation without implicit import or data mutation.
+- Added MVP-B commitment and actual-cost API adapters. Related PRD: Commitment, Actual Cost & Accrual. Acceptance: authorized users can create a project-scoped commitment and post actual cost only to an open period, with idempotency and human-controlled writes.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.

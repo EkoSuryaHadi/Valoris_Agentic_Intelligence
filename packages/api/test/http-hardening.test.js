@@ -158,3 +158,27 @@ test('API server commits only a fully valid import preview', async (t) => {
   assert.equal((await response.json()).data.importedCount, 1);
   assert.equal(importStore[0].referenceNo, 'PO-1');
 });
+
+test('API server creates a scoped commitment and posts actual cost', async (t) => {
+  const commitmentStore = [];
+  const actualStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    commitmentStore,
+    actualStore,
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }]
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: 'Bearer verified-token', 'idempotency-key': 'tx-1', 'content-type': 'application/json' };
+  const commitment = await fetch(`${base}/api/v1/projects/p1/commitments`, { method: 'POST', headers, body: JSON.stringify({ referenceNo: 'PO-2', vendor: 'Steel Co', amount: 2500 }) });
+  assert.equal(commitment.status, 201);
+  assert.equal((await commitment.json()).data.amount, 2500);
+  const actual = await fetch(`${base}/api/v1/periods/r1/actual-costs`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'actual-1' }, body: JSON.stringify({ sourceRef: 'INV-2', amount: 1200 }) });
+  assert.equal(actual.status, 201);
+  assert.equal((await actual.json()).data.amount, 1200);
+  assert.equal(commitmentStore.length, 1);
+  assert.equal(actualStore.length, 1);
+});
