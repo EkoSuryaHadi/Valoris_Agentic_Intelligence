@@ -8,6 +8,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added parameterized WBS/CBS, baseline-line, and actual-cost repository boundaries. Related PRD: Project Setup, Cost Baseline, Actual Cost.
 - Added parameterized commitment, accrual, and forecast snapshot repositories. Related PRD: Commitment, Forecast, and EAC.
 - Reconciled tenant-scoped transaction reads with the shared-schema ownership model and added the forecast persistence migration. Related PRD: Platform Core, Commitment, Forecast, and EAC. Acceptance: organization and project scope are enforced through the project join; forecast snapshots are unique per project and reporting period.
+- Added RS256 JWT/JWKS verification with issuer, audience, expiry, key, and signature validation; wired API runtime to bearer authentication with an explicit development-only header fallback. Related PRD: Platform Core and Security. Acceptance: production paths reject missing bearer credentials and preserve tenant/project claims from the verified token.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.

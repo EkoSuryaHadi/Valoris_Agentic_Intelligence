@@ -39,7 +39,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Executive reporting adapter | Implemented | `packages/api/src/reporting.js` |
 | PostgreSQL pool and project repository | Foundation implemented | `packages/db`, runtime tests |
 | Frontend runtime | Planned | UI/UX specifications |
-| Provider-backed JWT/JWKS verification | Planned | Security implementation backlog |
+| Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | Full CRUD repositories and E2E | Planned | Phase 9 hardening backlog |
 | WBS/CBS, baseline-line, and actual-cost repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
 | Commitment, accrual, and forecast repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
