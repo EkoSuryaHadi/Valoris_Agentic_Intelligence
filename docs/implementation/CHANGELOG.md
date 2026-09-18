@@ -19,6 +19,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the MVP-A human-controlled WBS creation form. Related PRD: Project Setup and UI/UX. Acceptance: an operator explicitly provides code and name, submits only in the active authorized project context, sees inline outcomes, and receives no simulated write in demo mode.
 - Added role-gated baseline draft creation for MVP-A. Related PRD: Cost Baseline, API, and UI/UX. Acceptance: the API assigns the next project-scoped version and `DRAFT` state only after verified human authorization; approval remains a separate Human-in-the-Loop action.
 - Added the MVP-A baseline draft action to the workspace. Related PRD: Cost Baseline and UI/UX. Acceptance: a human explicitly starts draft creation from the Baseline screen, receives inline success or error feedback, and the version history refreshes from the authorized project context.
+- Added the MVP-A budget-line API boundary. Related PRD: Cost Baseline, API, and Database. Acceptance: lines can be added only to an open baseline with same-project WBS/cost-code references and non-negative validated amounts.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.
