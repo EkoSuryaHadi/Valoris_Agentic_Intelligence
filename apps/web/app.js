@@ -51,6 +51,9 @@ function startWorkspace(documentRef) {
   const budgetLineButton = documentRef.querySelector('[data-add-budget-line]');
   const budgetLineForm = documentRef.querySelector('[data-budget-line-form]');
   const budgetLineFeedback = documentRef.querySelector('[data-budget-line-feedback]');
+  const reviewButton = documentRef.querySelector('[data-review-baseline]');
+  const reviewForm = documentRef.querySelector('[data-review-form]');
+  const reviewFeedback = documentRef.querySelector('[data-review-feedback]');
   const setWbsFormOpen = (open) => {
     if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
     if (!open && wbsFeedback) wbsFeedback.textContent = '';
@@ -59,6 +62,8 @@ function startWorkspace(documentRef) {
   documentRef.querySelector('[data-cancel-wbs-node]')?.addEventListener('click', () => setWbsFormOpen(false));
   budgetLineButton?.addEventListener('click', () => budgetLineForm?.classList.remove('is-hidden'));
   documentRef.querySelector('[data-cancel-budget-line]')?.addEventListener('click', () => budgetLineForm?.classList.add('is-hidden'));
+  reviewButton?.addEventListener('click', () => reviewForm?.classList.remove('is-hidden'));
+  documentRef.querySelector('[data-cancel-review]')?.addEventListener('click', () => reviewForm?.classList.add('is-hidden'));
   const config = globalThis.VALORIS_API_CONFIG;
   const runtimeStatus = documentRef.querySelector('[data-runtime-status]');
   if (config?.baseUrl && typeof config.tokenProvider === 'function') {
@@ -119,6 +124,23 @@ function startWorkspace(documentRef) {
         if (budgetLineFeedback) budgetLineFeedback.textContent = error.message || 'The budget line could not be added.';
       }
     });
+    reviewForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeBaseline) { if (reviewFeedback) reviewFeedback.textContent = 'Select a baseline before recording a decision.'; return; }
+      const data = new FormData(reviewForm);
+      const payload = { nextStatus: data.get('nextStatus'), reason: data.get('reason')?.trim() };
+      if (!payload.reason) { if (reviewFeedback) reviewFeedback.textContent = 'An audit reason is required.'; return; }
+      if (reviewFeedback) reviewFeedback.textContent = 'Recording human decision…';
+      try {
+        await client.transitionBaseline(activeBaseline.id, payload, globalThis.crypto?.randomUUID?.());
+        await activate(activeProject);
+        reviewForm.reset();
+        reviewForm.classList.add('is-hidden');
+        if (baselineFeedback) baselineFeedback.textContent = `Baseline decision recorded: ${payload.nextStatus}.`;
+      } catch (error) {
+        if (reviewFeedback) reviewFeedback.textContent = error.message || 'The baseline decision could not be recorded.';
+      }
+    });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);
       if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
@@ -134,6 +156,8 @@ function startWorkspace(documentRef) {
     wbsForm?.addEventListener('submit', (event) => { event.preventDefault(); if (wbsFeedback) wbsFeedback.textContent = 'Connect to an authorized project workspace to create a WBS node.'; });
     baselineButton?.addEventListener('click', () => { if (baselineFeedback) baselineFeedback.textContent = 'Connect to an authorized project workspace to create a baseline draft.'; });
     budgetLineForm?.addEventListener('submit', (event) => { event.preventDefault(); if (budgetLineFeedback) budgetLineFeedback.textContent = 'Connect to an authorized project workspace to add a budget line.'; });
+    reviewButton?.addEventListener('click', () => reviewForm?.classList.remove('is-hidden'));
+    reviewForm?.addEventListener('submit', (event) => { event.preventDefault(); if (reviewFeedback) reviewFeedback.textContent = 'Connect to an authorized project workspace to record a baseline decision.'; });
   }
 }
 

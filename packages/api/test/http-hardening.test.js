@@ -116,3 +116,18 @@ test('API server adds a budget line only to an open scoped baseline', async (t) 
   assert.equal((await response.json()).data.amount, 1250.5);
   assert.equal(budgetLineStore[0].baselineId, 'b1');
 });
+
+test('API server approves a submitted baseline only with human audit reason', async (t) => {
+  const baselineStore = [{ id: 'b1', projectId: 'p1', version: 1, status: 'SUBMITTED' }];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'manager-1', organizationId: 'o1', projectId: 'p1', role: 'COST_MANAGER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    baselineStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/baselines/b1/transition`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'approval-1', 'content-type': 'application/json' }, body: JSON.stringify({ nextStatus: 'APPROVED', reason: 'Validated against approved budget evidence' }) });
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).data.status, 'APPROVED');
+  assert.equal(baselineStore[0].status, 'APPROVED');
+});

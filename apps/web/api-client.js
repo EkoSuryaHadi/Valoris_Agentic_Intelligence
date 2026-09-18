@@ -27,6 +27,7 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     createWbsNode: (projectId, body, idempotencyKey) => request(projectPath(projectId, 'wbs'), { method: 'POST', body, idempotencyKey }),
     getBaselines: (projectId) => request(projectPath(projectId, 'baselines')),
     createBaseline: (projectId, body, idempotencyKey) => request(projectPath(projectId, 'baselines'), { method: 'POST', body, idempotencyKey }),
-    createBudgetLine: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/lines`, { method: 'POST', body, idempotencyKey })
+    createBudgetLine: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/lines`, { method: 'POST', body, idempotencyKey }),
+    transitionBaseline: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/transition`, { method: 'POST', body, idempotencyKey })
   };
 }

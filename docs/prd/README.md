@@ -48,6 +48,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | MVP-A baseline draft workspace | Implemented | `apps/web/index.html`, `apps/web/app.js`; human-triggered draft creation with inline outcome and refresh |
 | Approved UI/UX design token migration | In progress | `apps/web/styles.css`; aligned to VALORIS UI/UX Design Specification v1.0: navy shell, cool canvas, indigo primary, semantic states |
 | MVP-A budget-line entry workspace | Implemented | `apps/web/index.html`, `apps/web/app.js`; human-controlled 2-column entry form bound to the active open baseline |
+| MVP-A baseline review workflow | Implemented | `packages/api/src/server.js`, `apps/web/app.js`; role-gated approval/lock transition with mandatory audit reason and inline human decision form |
 | MVP-A budget-line API boundary | Implemented | `packages/api/src/server.js`, `apps/web/api-client.js`; project-scoped budget-line creation with baseline, WBS, cost-code, and amount guardrails |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |
