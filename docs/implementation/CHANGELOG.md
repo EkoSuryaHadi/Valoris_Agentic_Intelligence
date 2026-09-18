@@ -6,6 +6,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 
 - Added runtime PostgreSQL pool and tenant-scoped project repository. Related PRD: Platform Core, Database, Security.
 - Added parameterized WBS/CBS, baseline-line, and actual-cost repository boundaries. Related PRD: Project Setup, Cost Baseline, Actual Cost.
+- Added parameterized commitment, accrual, and forecast snapshot repositories. Related PRD: Commitment, Forecast, and EAC.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.
