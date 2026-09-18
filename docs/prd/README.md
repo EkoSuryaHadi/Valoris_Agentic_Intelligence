@@ -41,6 +41,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Frontend runtime | Planned | UI/UX specifications |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |
+| Request correlation and rate-limit store boundary | Implemented | `x-request-id` correlation, injectable limiter store, and audit-safe structured request events |
 | Full CRUD repositories and E2E | Planned | Phase 9 hardening backlog |
 | WBS/CBS, baseline-line, and actual-cost repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
 | Commitment, accrual, and forecast repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |

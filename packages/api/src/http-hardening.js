@@ -1,5 +1,7 @@
-export function createRateLimiter({ limit = 60, windowMs = 60_000, now = Date.now } = {}) {
-  const buckets = new Map();
+import { randomUUID } from 'node:crypto';
+
+export function createRateLimiter({ limit = 60, windowMs = 60_000, now = Date.now, store = new Map() } = {}) {
+  const buckets = store;
   return {
     check(key) {
       const current = now();
@@ -13,6 +15,11 @@ export function createRateLimiter({ limit = 60, windowMs = 60_000, now = Date.no
       return { allowed, remaining: Math.max(0, limit - bucket.count), retryAfterSec: Math.ceil((bucket.resetAt - current) / 1000) };
     }
   };
+}
+
+export function getRequestId(request) {
+  const candidate = request.headers?.['x-request-id'];
+  return typeof candidate === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(candidate) ? candidate : randomUUID();
 }
 
 export async function parseJsonBody(request, maxBytes = 1_048_576) {
