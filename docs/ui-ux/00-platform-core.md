@@ -33,3 +33,7 @@
 ## Empty states
 
 Every empty state should explain why it is empty, what prerequisite is missing, and the next safe action.
+
+## Phase 10 implementation baseline
+
+The MVP-A web shell is implemented in `apps/web` with an industrial-editorial visual direction: warm paper surfaces, ink navy navigation, amber action signals, and dense evidence-first tables. The shell includes Overview, WBS/CBS, Baseline, Import Center, and Audit Trail views. It is a workspace UI, not a chatbot surface; later API wiring must preserve organization/project context, role boundaries, source freshness, and human approval states.
