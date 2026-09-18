@@ -43,3 +43,4 @@ The shell now supports progressive live-data hydration through `apps/web/api-cli
 When the runtime configuration is active, the persistent project selector is populated only from the tenant-scoped project API response. Switching projects refreshes WBS and baseline views for the selected project; an empty authorized-project list produces an explicit `No authorized project` state.
 
 The WBS explorer now exposes a human-controlled root-node form. It requires code and name confirmation, submits only to the selected authorized project, refreshes the project tree after the API confirms creation, and renders validation or scope errors in place. Demo mode makes the limitation explicit and does not simulate a mutation.
+The Baseline screen now exposes a human-triggered Create version action. It creates only a project-scoped DRAFT, refreshes version history after confirmation, and keeps approval as a separate human decision.
