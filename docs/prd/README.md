@@ -41,6 +41,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Frontend runtime | Planned | UI/UX specifications |
 | Provider-backed JWT/JWKS verification | Planned | Security implementation backlog |
 | Full CRUD repositories and E2E | Planned | Phase 9 hardening backlog |
+| WBS/CBS, baseline-line, and actual-cost repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
