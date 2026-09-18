@@ -42,6 +42,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | MVP-A read API boundary | Implemented | `packages/api/src/server.js`; tenant-scoped projects plus project-scoped WBS/baseline reads |
 | MVP-A browser API client | Implemented | `apps/web/api-client.js`; bearer, request ID, idempotency, and structured error boundary |
 | MVP-A active project context | Implemented | `apps/web/project-context.js`, `apps/web/app.js`; selection constrained to tenant-scoped API results |
+| MVP-A WBS creation API | Implemented | `packages/api/src/server.js`; authenticated, project-scoped, role-gated WBS creation with idempotency and hierarchy validation |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |
 | Request correlation and rate-limit store boundary | Implemented | `x-request-id` correlation, injectable limiter store, and audit-safe structured request events |

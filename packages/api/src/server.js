@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
 import { createProjectResponse } from './projects.js';
+import { createHierarchyResponse } from './hierarchy.js';
 import { authenticateRequest } from './auth.js';
 import { createRateLimiter, parseJsonBody } from './http-hardening.js';
 import { getRequestId } from './http-hardening.js';
@@ -28,7 +29,30 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         response.writeHead(401); response.end(JSON.stringify({ error: { code: 'UNAUTHENTICATED', message: 'valid bearer authentication is required' } })); return;
       }
     }
-    if (request.method === 'POST' && request.url === '/api/v1/projects') {
+    const writeUrl = new URL(request.url, 'http://localhost');
+    const wbsMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/wbs$/);
+    if (request.method === 'POST' && wbsMatch) {
+      try {
+        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
+        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 429 }); return; }
+        const parsed = await parseJsonBody(request, bodyLimitBytes);
+        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
+        const project = projectStore.find((candidate) => candidate.id === wbsMatch[1]);
+        const result = createHierarchyResponse({ user, project, existingNodes: wbsStore.filter((node) => node.projectId === wbsMatch[1]), body: parsed, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 201) {
+          result.body.data = { id: crypto.randomUUID(), ...result.body.data };
+          wbsStore.push(result.body.data);
+        }
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
+      } catch (error) {
+        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
+        const code = error.code || 'UNAUTHENTICATED';
+        const message = status === 401 ? 'valid bearer authentication is required' : error.message;
+        response.writeHead(status); response.end(JSON.stringify({ error: { code, message } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status });
+      }
+      return;
+    }
+    if (request.method === 'POST' && writeUrl.pathname === '/api/v1/projects') {
       try {
         const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
         if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 429 }); return; }
