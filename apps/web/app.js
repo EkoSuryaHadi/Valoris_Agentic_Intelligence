@@ -43,19 +43,45 @@ function startWorkspace(documentRef) {
   }));
 
   navigate(window.location.hash.slice(1) || 'overview');
+  const wbsForm = documentRef.querySelector('[data-wbs-form]');
+  const wbsFeedback = documentRef.querySelector('[data-wbs-feedback]');
+  const setWbsFormOpen = (open) => {
+    if (wbsForm) wbsForm.classList.toggle('is-hidden', !open);
+    if (!open && wbsFeedback) wbsFeedback.textContent = '';
+  };
+  documentRef.querySelector('[data-add-wbs-node]')?.addEventListener('click', () => setWbsFormOpen(true));
+  documentRef.querySelector('[data-cancel-wbs-node]')?.addEventListener('click', () => setWbsFormOpen(false));
   const config = globalThis.VALORIS_API_CONFIG;
   const runtimeStatus = documentRef.querySelector('[data-runtime-status]');
   if (config?.baseUrl && typeof config.tokenProvider === 'function') {
     const client = createApiClient(config);
     const selector = documentRef.querySelector('[data-project-selector]');
     const projectName = documentRef.querySelector('[data-project-name]');
+    let activeProject;
     const activate = async (project) => {
       if (!project) return;
+      activeProject = project;
       if (projectName) projectName.textContent = project.name;
       if (selector) selector.value = project.id;
       await hydrateMvpA({ client, projectId: project.id, documentRef });
       if (runtimeStatus) runtimeStatus.textContent = 'Live project data';
     };
+    wbsForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (wbsFeedback) wbsFeedback.textContent = 'Choose an authorized project before creating a node.'; return; }
+      const data = new FormData(wbsForm);
+      const payload = { code: data.get('code')?.trim(), name: data.get('name')?.trim(), level: Number(data.get('level')) };
+      if (!payload.code || !payload.name) { if (wbsFeedback) wbsFeedback.textContent = 'Code and node name are required.'; return; }
+      if (wbsFeedback) wbsFeedback.textContent = 'Creating WBS node…';
+      try {
+        await client.createWbsNode(activeProject.id, payload, globalThis.crypto?.randomUUID?.());
+        await activate(activeProject);
+        wbsForm.reset();
+        if (wbsFeedback) wbsFeedback.textContent = 'WBS node created and added to the project structure.';
+      } catch (error) {
+        if (wbsFeedback) wbsFeedback.textContent = error.message || 'The WBS node could not be created.';
+      }
+    });
     client.listProjects().then(async (projects) => {
       const active = selectActiveProject(projects, config.projectId);
       if (!active) { if (runtimeStatus) runtimeStatus.textContent = 'No authorized project'; return; }
@@ -67,6 +93,8 @@ function startWorkspace(documentRef) {
       }
       await activate(active);
     }).catch(() => { if (runtimeStatus) runtimeStatus.textContent = 'Demo data — live connection unavailable'; });
+  } else {
+    wbsForm?.addEventListener('submit', (event) => { event.preventDefault(); if (wbsFeedback) wbsFeedback.textContent = 'Connect to an authorized project workspace to create a WBS node.'; });
   }
 }
 

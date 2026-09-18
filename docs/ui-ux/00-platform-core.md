@@ -41,3 +41,5 @@ The MVP-A web shell is implemented in `apps/web` with an industrial-editorial vi
 The shell now supports progressive live-data hydration through `apps/web/api-client.js`. A trusted host may provide `globalThis.VALORIS_API_CONFIG` with `baseUrl`, `projectId`, and a `tokenProvider` function; the browser never persists bearer tokens in the DOM or web storage. Without that runtime configuration, the review shell stays in demo-data mode.
 
 When the runtime configuration is active, the persistent project selector is populated only from the tenant-scoped project API response. Switching projects refreshes WBS and baseline views for the selected project; an empty authorized-project list produces an explicit `No authorized project` state.
+
+The WBS explorer now exposes a human-controlled root-node form. It requires code and name confirmation, submits only to the selected authorized project, refreshes the project tree after the API confirms creation, and renders validation or scope errors in place. Demo mode makes the limitation explicit and does not simulate a mutation.

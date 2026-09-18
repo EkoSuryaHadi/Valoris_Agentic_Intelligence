@@ -8,5 +8,8 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(html, /Baseline control/);
   assert.match(html, /Import center/);
   assert.match(html, /Audit trail/);
+  assert.match(html, /data-add-wbs-node/);
+  assert.match(html, /data-wbs-form/);
+  assert.match(html, /data-wbs-feedback/);
   assert.doesNotMatch(html, /chatbot|chat with/i);
 });
