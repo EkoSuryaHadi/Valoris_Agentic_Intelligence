@@ -17,6 +17,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the MVP-A active project selector. Related PRD: Platform Core and UI/UX. Acceptance: the control is populated solely by tenant-scoped results, preserves an explicit active project, refreshes project-bound WBS/baseline data, and never invents a cross-tenant fallback.
 - Added authenticated WBS creation for MVP-A. Related PRD: Project Setup, API, and UI/UX. Acceptance: WBS nodes can only be created inside the verified project scope by an authorized human role, require an idempotency key, and satisfy hierarchy validation before persistence.
 - Added the MVP-A human-controlled WBS creation form. Related PRD: Project Setup and UI/UX. Acceptance: an operator explicitly provides code and name, submits only in the active authorized project context, sees inline outcomes, and receives no simulated write in demo mode.
+- Added role-gated baseline draft creation for MVP-A. Related PRD: Cost Baseline, API, and UI/UX. Acceptance: the API assigns the next project-scoped version and `DRAFT` state only after verified human authorization; approval remains a separate Human-in-the-Loop action.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.

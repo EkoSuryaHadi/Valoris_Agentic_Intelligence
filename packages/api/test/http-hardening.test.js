@@ -82,3 +82,19 @@ test('API server creates a WBS node only in the verified project scope', async (
   assert.equal((await response.json()).data.code, '01');
   assert.equal(wbsStore[0].projectId, 'p1');
 });
+
+test('API server creates a baseline draft only in the verified project scope', async (t) => {
+  const baselineStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    baselineStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/projects/p1/baselines`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'baseline-1', 'content-type': 'application/json' }, body: JSON.stringify({}) });
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).data.status, 'DRAFT');
+  assert.equal(baselineStore[0].projectId, 'p1');
+  assert.equal(baselineStore[0].version, 1);
+});
