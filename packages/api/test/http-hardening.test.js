@@ -98,3 +98,21 @@ test('API server creates a baseline draft only in the verified project scope', a
   assert.equal(baselineStore[0].projectId, 'p1');
   assert.equal(baselineStore[0].version, 1);
 });
+
+test('API server adds a budget line only to an open scoped baseline', async (t) => {
+  const budgetLineStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    baselineStore: [{ id: 'b1', projectId: 'p1', version: 1, status: 'DRAFT' }],
+    wbsStore: [{ id: 'w1', projectId: 'p1', code: '01', name: 'Site', level: 1 }],
+    costCodeStore: [{ id: 'c1', projectId: 'p1', code: 'MAT', name: 'Materials' }],
+    budgetLineStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/baselines/b1/lines`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'line-1', 'content-type': 'application/json' }, body: JSON.stringify({ wbsId: 'w1', costCodeId: 'c1', amount: 1250.5 }) });
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).data.amount, 1250.5);
+  assert.equal(budgetLineStore[0].baselineId, 'b1');
+});
