@@ -75,7 +75,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 21 real staging environment | Preflight implemented; external services pending | `scripts/staging-preflight.ps1`, `docs/implementation/PHASE21_STAGING_ENVIRONMENT.md`; validates non-placeholder configuration and optional auth/storage/queue health endpoints without exposing secrets |
 | Phase 22 automated browser UAT | Implemented locally | `scripts/browser-uat.ps1`; walks all 11 primary screens and fails on missing view or browser console errors |
 | Phase 23 CI/CD and security gate | Implemented | `.github/workflows/ci.yml`, `scripts/security-scan.mjs`, and frontend CSP; full tests, static security scan, and high-severity dependency audit run in CI |
-| Phase 24 Vercel staging deployment | Web preview deployed; API/runtime pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; explicit Vercel preview is READY, while API, database, identity, storage, and queue remain environment-specific |
+| Phase 24 Vercel staging deployment | Web and API previews deployed; runtime persistence pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; explicit Vercel previews are READY, while PostgreSQL wiring, identity, storage, queue, and staging verification remain |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

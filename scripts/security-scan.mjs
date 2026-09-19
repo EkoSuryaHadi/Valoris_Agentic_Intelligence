@@ -1,7 +1,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 
 const files = [];
-for (const directory of ['apps/web', 'packages/api/src', 'packages/db/src']) {
+for (const directory of ['api', 'apps/web', 'packages/api/src', 'packages/db/src']) {
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (entry.isFile() && (entry.name.endsWith('.js') || entry.name === 'index.html')) files.push(`${directory}/${entry.name}`);
   }
