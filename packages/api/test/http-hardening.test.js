@@ -249,3 +249,15 @@ test('API server creates and incorporates a human-approved change', async (t) =>
   assert.equal(incorporated.status, 200);
   assert.equal((await incorporated.json()).data.status, 'INCORPORATED');
 });
+
+test('API server returns a scoped cash flow variance summary', async (t) => {
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }]
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/projects/p1/cash-flow`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'content-type': 'application/json' }, body: JSON.stringify({ planned: [100, 50], actual: [120, 40], forecast: [120, 40, 80] }) });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).data.variance, [20, -10]);
+});

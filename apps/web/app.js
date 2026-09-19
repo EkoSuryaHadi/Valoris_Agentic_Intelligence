@@ -75,6 +75,8 @@ function startWorkspace(documentRef) {
   const evmCv = documentRef.querySelector('[data-evm-cv]');
   const changeForm = documentRef.querySelector('[data-change-form]');
   const changeFeedback = documentRef.querySelector('[data-change-feedback]');
+  const cashFlowForm = documentRef.querySelector('[data-cash-flow-form]');
+  const cashFlowFeedback = documentRef.querySelector('[data-cash-flow-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -239,6 +241,16 @@ function startWorkspace(documentRef) {
       if (changeFeedback) changeFeedback.textContent = 'Saving potential change…';
       try { const result = await client.createChange(activeProject.id, payload, globalThis.crypto?.randomUUID?.()); changeForm.reset(); if (changeFeedback) changeFeedback.textContent = `Change ${result.number} saved with weighted exposure ${result.exposure}. Awaiting human decision.`; } catch (error) { if (changeFeedback) changeFeedback.textContent = error.message || 'The change could not be saved.'; }
     });
+    cashFlowForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (cashFlowFeedback) cashFlowFeedback.textContent = 'Choose an authorized project before calculating cash flow.'; return; }
+      const data = new FormData(cashFlowForm);
+      const parse = (name) => String(data.get(name) || '').split(',').map(Number);
+      const payload = { planned: parse('planned'), actual: parse('actual'), forecast: parse('forecast') };
+      if (payload.planned.some((value) => !Number.isFinite(value)) || payload.actual.some((value) => !Number.isFinite(value)) || payload.forecast.some((value) => !Number.isFinite(value))) { if (cashFlowFeedback) cashFlowFeedback.textContent = 'Enter comma-separated numeric values for each period series.'; return; }
+      if (cashFlowFeedback) cashFlowFeedback.textContent = 'Calculating cash variance…';
+      try { const result = await client.getCashFlow(activeProject.id, payload); if (cashFlowFeedback) cashFlowFeedback.textContent = `Cash variance calculated across ${result.variance.length} aligned periods.`; } catch (error) { if (cashFlowFeedback) cashFlowFeedback.textContent = error.message || 'The cash flow summary could not be calculated.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -290,6 +302,7 @@ function startWorkspace(documentRef) {
     forecastForm?.addEventListener('submit', (event) => { event.preventDefault(); if (forecastFeedback) forecastFeedback.textContent = 'Connect to an authorized project workspace to calculate a forecast.'; });
     evmForm?.addEventListener('submit', (event) => { event.preventDefault(); if (evmFeedback) evmFeedback.textContent = 'Connect to an authorized project workspace to calculate EVM.'; });
     changeForm?.addEventListener('submit', (event) => { event.preventDefault(); if (changeFeedback) changeFeedback.textContent = 'Connect to an authorized project workspace to record a change.'; });
+    cashFlowForm?.addEventListener('submit', (event) => { event.preventDefault(); if (cashFlowFeedback) cashFlowFeedback.textContent = 'Connect to an authorized project workspace to calculate cash flow.'; });
   }
 }
 

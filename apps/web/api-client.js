@@ -36,6 +36,7 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     calculateEvm: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/evm`, { method: 'POST', body, idempotencyKey }),
     createChange: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/changes`, { method: 'POST', body, idempotencyKey }),
     incorporateChange: (changeId, idempotencyKey) => request(`/changes/${encodeURIComponent(changeId)}/incorporate`, { method: 'POST', body: {}, idempotencyKey }),
+    getCashFlow: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/cash-flow`, { method: 'POST', body }),
     previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body }),
     commitImport: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/imports/commit`, { method: 'POST', body, idempotencyKey })
   };
