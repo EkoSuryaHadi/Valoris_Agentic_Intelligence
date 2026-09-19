@@ -14,6 +14,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Verified the Node `pg` pool boundary against the running PostgreSQL staging container using `DATABASE_URL`.
 - Added the Phase 19 repeatable PostgreSQL staging runbook with parameterized credentials and opt-in demo seed loading.
 - Added the Phase 20 deployment verification script for API health, security headers, authenticated project access, and optional project scope checks.
+- Added the Phase 21 staging preflight and environment runbook for secret-safe auth, storage, queue, database, and deployment checks.
 
 ## 2026-09-18
 

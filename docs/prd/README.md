@@ -72,6 +72,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 18 staging validation | Local staging validation complete; deployment verification pending | `docs/implementation/PHASE18_STAGING_VALIDATION.md`; 96 automated tests, PostgreSQL seed, Node `pg` connection, API smoke, all primary screen UAT, deep-link reload, and clean browser console verified |
 | Phase 19 deployment runbook | Implemented | `scripts/staging-db.ps1`; repeatable, parameterized PostgreSQL startup and schema/migration/seed application without committed credentials |
 | Phase 20 deployment verification | Implemented | `scripts/staging-verify.ps1`; health, security-header, authenticated project, and optional project-scope checks using runtime-supplied credentials |
+| Phase 21 real staging environment | Preflight implemented; external services pending | `scripts/staging-preflight.ps1`, `docs/implementation/PHASE21_STAGING_ENVIRONMENT.md`; validates non-placeholder configuration and optional auth/storage/queue health endpoints without exposing secrets |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
