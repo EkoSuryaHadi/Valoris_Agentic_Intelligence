@@ -6,9 +6,10 @@ Web preview deployment is ready on Vercel. The API and external staging services
 
 ## Deployment
 
+- Vercel team: `ekosuryahadis-projects`
 - Vercel project: `web`
-- Preview URL: `https://web-rnggzgejh-ekosuryahadis-projects.vercel.app`
-- Inspect URL: `https://vercel.com/ekosuryahadis-projects/web/CSuZeZCWz54YF2pi551KF8BvKvxc`
+- Preview URL: `https://web-h25hfsut9-ekosuryahadis-projects.vercel.app`
+- Inspect URL: `https://vercel.com/ekosuryahadis-projects/web/93W8SEChGCNz5gYwF83L7C8jfBsP`
 - Deployment type: preview
 
 The first CLI deployment was automatically assigned a production target by Vercel because the project had no prior deployment. It is not treated as the VALORIS production release. Subsequent validation uses the explicit preview deployment above.
