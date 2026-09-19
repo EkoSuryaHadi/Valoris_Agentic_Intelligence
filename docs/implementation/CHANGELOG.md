@@ -2,6 +2,12 @@
 
 This file links implementation increments to the PRD contract. Update it in the same commit as any material product or technical change.
 
+## 2026-09-19 — Release validation foundation
+
+- Added release migration for EVM snapshots, changes, risks, agent findings, and cash-flow snapshots.
+- Expanded deterministic demo seed through the end-to-end cost-control workflow.
+- Updated CI and `npm test` to execute web, API, database, and domain suites.
+
 ## 2026-09-18
 
 - Added runtime PostgreSQL pool and tenant-scoped project repository. Related PRD: Platform Core, Database, Security.

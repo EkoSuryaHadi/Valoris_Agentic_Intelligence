@@ -1,5 +1,9 @@
 # VALORIS Phase 17 — Production Readiness
 
+## Release validation foundation
+
+The repository now includes migration `006_phase4_release_readiness.sql`, a deterministic seed covering the open reporting period and Phase 2–16 workflow records, and CI coverage for the complete web/API/database/domain test suite. The remaining staging checks are environment-specific actions requiring deployment credentials.
+
 ## Release gates
 
 - [x] Tenant and project scope enforced on protected routes.
