@@ -74,6 +74,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 20 deployment verification | Implemented | `scripts/staging-verify.ps1`; health, security-header, authenticated project, and optional project-scope checks using runtime-supplied credentials |
 | Phase 21 real staging environment | Preflight implemented; external services pending | `scripts/staging-preflight.ps1`, `docs/implementation/PHASE21_STAGING_ENVIRONMENT.md`; validates non-placeholder configuration and optional auth/storage/queue health endpoints without exposing secrets |
 | Phase 22 automated browser UAT | Implemented locally | `scripts/browser-uat.ps1`; walks all 11 primary screens and fails on missing view or browser console errors |
+| Phase 23 CI/CD and security gate | Implemented | `.github/workflows/ci.yml`, `scripts/security-scan.mjs`, and frontend CSP; full tests, static security scan, and high-severity dependency audit run in CI |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
