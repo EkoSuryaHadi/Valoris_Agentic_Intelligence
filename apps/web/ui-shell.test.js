@@ -48,4 +48,6 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(css, /--sidebar:\s*#0F172A/i);
   assert.match(css, /--canvas:\s*#F8FAFC/i);
   assert.match(css, /--primary:\s*#4F46E5/i);
+  const app = await readFile(new URL('./app.js', import.meta.url), 'utf8');
+  assert.match(app, /addEventListener\('hashchange'/);
 });

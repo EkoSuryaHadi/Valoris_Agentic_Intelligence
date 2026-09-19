@@ -43,6 +43,7 @@ function startWorkspace(documentRef) {
     navigate(trigger.dataset.screen);
   }));
 
+  window.addEventListener('hashchange', () => navigate(window.location.hash.slice(1) || 'overview'));
   navigate(window.location.hash.slice(1) || 'overview');
   const wbsForm = documentRef.querySelector('[data-wbs-form]');
   const wbsFeedback = documentRef.querySelector('[data-wbs-feedback]');

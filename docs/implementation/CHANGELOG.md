@@ -10,6 +10,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Completed local release smoke validation and documented the remaining staging-only actions for Phase 18.
 - Applied schema, migrations 004–006, and deterministic seed to the local PostgreSQL staging container; verified the seeded workflow records and OPEN/NEW statuses.
 - Completed API smoke validation for health, security headers, tenant-scoped read, human-controlled WBS write, unauthorized access, and hierarchy rejection.
+- Completed browser UAT across all primary workspace screens; fixed hash-route reload handling and removed the favicon console error.
 
 ## 2026-09-18
 
