@@ -69,6 +69,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Commitment, accrual, and forecast repositories | Foundation implemented | `packages/db/src/domain-repositories.js` |
 | Tenant-safe transaction reads and forecast migration | Implemented | `packages/db/src/queries.js`, `database/migrations/005_phase3_forecast.sql` |
 | Release persistence, deterministic demo seed, and full CI test gate | Implemented | `database/migrations/006_phase4_release_readiness.sql`, `database/seed.sql`, `.github/workflows/ci.yml`; covers EVM, change, risk, finding, cash-flow records and web/API/database/domain regression suites |
+| Phase 18 local release validation | Implemented locally; staging pending | `docs/implementation/PHASE18_STAGING_VALIDATION.md`; 96 automated tests and static preview verified, with real PostgreSQL/browser UAT reserved for staging |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
