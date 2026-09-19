@@ -228,3 +228,24 @@ test('API server calculates a scoped EVM snapshot', async (t) => {
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).data, { id: evmStore[0].id, projectId: 'p1', periodId: 'r1', pv: 600, ev: 500, ac: 600, cv: -100, sv: -100, cpi: 0.833333, spi: 0.833333 });
 });
+
+test('API server creates and incorporates a human-approved change', async (t) => {
+  const changeStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'manager-1', organizationId: 'o1', projectId: 'p1', role: 'PROJECT_MANAGER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    changeStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: 'Bearer verified-token', 'idempotency-key': 'change-1', 'content-type': 'application/json' };
+  const created = await fetch(`${base}/api/v1/projects/p1/changes`, { method: 'POST', headers, body: JSON.stringify({ number: 'VO-2', title: 'Reroute', type: 'DESIGN', estimatedCost: 1000, probability: 0.5 }) });
+  assert.equal(created.status, 201);
+  const changeId = (await created.json()).data.id;
+  changeStore[0].status = 'APPROVED';
+  changeStore[0].approvedCost = 900;
+  const incorporated = await fetch(`${base}/api/v1/changes/${changeId}/incorporate`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'change-2' }, body: '{}' });
+  assert.equal(incorporated.status, 200);
+  assert.equal((await incorporated.json()).data.status, 'INCORPORATED');
+});

@@ -6,11 +6,12 @@ import { validateImportResponse, commitImportResponse } from './agent-import.js'
 import { createCommitmentResponse, postActualResponse, createAccrualResponse } from './transactions.js';
 import { calculateForecastResponse } from './forecast.js';
 import { calculateEvmResponse } from './evm.js';
+import { createChangeResponse, incorporateChangeResponse } from './change.js';
 import { authenticateRequest } from './auth.js';
 import { createRateLimiter, parseJsonBody } from './http-hardening.js';
 import { getRequestId } from './http-hardening.js';
 
-export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], periodStore = [], tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
+export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], periodStore = [], tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
   return createServer(async (request, response) => {
     const requestId = getRequestId(request);
     response.setHeader('x-request-id', requestId);
@@ -46,6 +47,41 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
     const accrualMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/accruals$/);
     const forecastMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/forecast$/);
     const evmMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/evm$/);
+    const changeMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/changes$/);
+    const incorporateMatch = writeUrl.pathname.match(/^\/api\/v1\/changes\/([^/]+)\/incorporate$/);
+    if (request.method === 'POST' && changeMatch) {
+      try {
+        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
+        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
+        const parsed = await parseJsonBody(request, bodyLimitBytes);
+        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
+        const project = projectStore.find((candidate) => candidate.id === changeMatch[1]);
+        const result = createChangeResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; changeStore.push(result.body.data); }
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
+      } catch (error) {
+        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
+        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
+      }
+      return;
+    }
+    if (request.method === 'POST' && incorporateMatch) {
+      try {
+        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
+        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
+        await parseJsonBody(request, bodyLimitBytes);
+        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
+        const change = changeStore.find((candidate) => candidate.id === incorporateMatch[1]);
+        const project = projectStore.find((candidate) => candidate.id === change?.projectId);
+        const result = incorporateChangeResponse({ user, project, change, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 200) change.status = result.body.data.status;
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
+      } catch (error) {
+        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
+        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
+      }
+      return;
+    }
     if (request.method === 'POST' && commitmentMatch) {
       try {
         const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');

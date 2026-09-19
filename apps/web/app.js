@@ -73,6 +73,8 @@ function startWorkspace(documentRef) {
   const evmCpi = documentRef.querySelector('[data-evm-cpi]');
   const evmSpi = documentRef.querySelector('[data-evm-spi]');
   const evmCv = documentRef.querySelector('[data-evm-cv]');
+  const changeForm = documentRef.querySelector('[data-change-form]');
+  const changeFeedback = documentRef.querySelector('[data-change-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -228,6 +230,15 @@ function startWorkspace(documentRef) {
       if (evmFeedback) evmFeedback.textContent = 'Calculating EVM snapshot…';
       try { const result = await client.calculateEvm(periodId, payload, globalThis.crypto?.randomUUID?.()); if (evmCpi) evmCpi.textContent = result.cpi?.toFixed(2) ?? '—'; if (evmSpi) evmSpi.textContent = result.spi?.toFixed(2) ?? '—'; if (evmCv) evmCv.textContent = result.cv.toLocaleString(); if (evmFeedback) evmFeedback.textContent = 'EVM snapshot calculated from the submitted progress and cost evidence.'; } catch (error) { if (evmFeedback) evmFeedback.textContent = error.message || 'The EVM snapshot could not be calculated.'; }
     });
+    changeForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (changeFeedback) changeFeedback.textContent = 'Choose an authorized project before recording a change.'; return; }
+      const data = new FormData(changeForm);
+      const payload = { number: data.get('number')?.trim(), title: data.get('title')?.trim(), type: data.get('type'), estimatedCost: Number(data.get('estimatedCost')), probability: Number(data.get('probability')) };
+      if (!payload.number || !payload.title || !Number.isFinite(payload.estimatedCost) || payload.estimatedCost < 0 || !Number.isFinite(payload.probability) || payload.probability < 0 || payload.probability > 1) { if (changeFeedback) changeFeedback.textContent = 'Number, title, non-negative estimated cost, and probability from 0 to 1 are required.'; return; }
+      if (changeFeedback) changeFeedback.textContent = 'Saving potential change…';
+      try { const result = await client.createChange(activeProject.id, payload, globalThis.crypto?.randomUUID?.()); changeForm.reset(); if (changeFeedback) changeFeedback.textContent = `Change ${result.number} saved with weighted exposure ${result.exposure}. Awaiting human decision.`; } catch (error) { if (changeFeedback) changeFeedback.textContent = error.message || 'The change could not be saved.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -278,6 +289,7 @@ function startWorkspace(documentRef) {
     accrualForm?.addEventListener('submit', (event) => { event.preventDefault(); if (accrualFeedback) accrualFeedback.textContent = 'Connect to an authorized project workspace to record an accrual.'; });
     forecastForm?.addEventListener('submit', (event) => { event.preventDefault(); if (forecastFeedback) forecastFeedback.textContent = 'Connect to an authorized project workspace to calculate a forecast.'; });
     evmForm?.addEventListener('submit', (event) => { event.preventDefault(); if (evmFeedback) evmFeedback.textContent = 'Connect to an authorized project workspace to calculate EVM.'; });
+    changeForm?.addEventListener('submit', (event) => { event.preventDefault(); if (changeFeedback) changeFeedback.textContent = 'Connect to an authorized project workspace to record a change.'; });
   }
 }
 
