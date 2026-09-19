@@ -46,6 +46,8 @@ test('API server returns stable hardening responses for protected writes', async
   const limited = await fetch(`${base}/api/v1/projects`, { method: 'POST', body: '{"long":true}', headers: { 'content-type': 'application/json' } });
   assert.equal(limited.status, 429);
   assert.equal(events.every((event) => !('authorization' in event) && !('body' in event)), true);
+  assert.equal(health.headers.get('x-content-type-options'), 'nosniff');
+  assert.equal(health.headers.get('referrer-policy'), 'no-referrer');
 });
 
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {

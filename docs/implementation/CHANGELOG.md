@@ -33,6 +33,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the MVP-C Change Management workspace and scoped create/incorporate routes. Acceptance: potential changes show weighted exposure; only approved changes can be incorporated by an authorized project or cost manager.
 - Added the MVP-C Cash Flow Control workspace and read-only variance route. Acceptance: aligned planned and actual period series return variance and cumulative forecast for human review.
 - Added the MVP-C Risk & Findings workspace with risk creation, evidence-linked finding capture, and human review routes. Acceptance: agents can recommend but only a human can accept, dismiss, or escalate a finding.
+- Added Phase 17 production-readiness gates, deterministic demo seed guidance, environment checklist, and Definition of Ready/Done. Added security response headers and regression coverage.
 - Added authentication claims boundary and runtime API server. Related PRD: Platform Core, Access Control, API.
 - Added API adapters for baseline, transactions, forecast/EVM, change, cash/risk, findings/import, and executive reporting. Related PRD: Modules 01–12.
 - Added UI contracts for Phase 2–7 workspaces. Related PRD: UI/UX and module PRDs.
