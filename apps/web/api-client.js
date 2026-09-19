@@ -32,6 +32,7 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     createCommitment: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/commitments`, { method: 'POST', body, idempotencyKey }),
     postActualCost: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/actual-costs`, { method: 'POST', body, idempotencyKey }),
     createAccrual: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/accruals`, { method: 'POST', body, idempotencyKey }),
+    calculateForecast: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/forecast`, { method: 'POST', body, idempotencyKey }),
     previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body }),
     commitImport: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/imports/commit`, { method: 'POST', body, idempotencyKey })
   };

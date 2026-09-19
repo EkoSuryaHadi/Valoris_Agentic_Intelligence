@@ -64,6 +64,10 @@ function startWorkspace(documentRef) {
   const transactionFeedback = documentRef.querySelector('[data-transaction-feedback]');
   const accrualForm = documentRef.querySelector('[data-accrual-form]');
   const accrualFeedback = documentRef.querySelector('[data-accrual-feedback]');
+  const forecastForm = documentRef.querySelector('[data-forecast-form]');
+  const forecastFeedback = documentRef.querySelector('[data-forecast-feedback]');
+  const forecastEac = documentRef.querySelector('[data-forecast-eac]');
+  const forecastVac = documentRef.querySelector('[data-forecast-vac]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -199,6 +203,16 @@ function startWorkspace(documentRef) {
       if (accrualFeedback) accrualFeedback.textContent = 'Saving accrual…';
       try { await client.createAccrual(periodId, payload, globalThis.crypto?.randomUUID?.()); accrualForm.reset(); if (accrualFeedback) accrualFeedback.textContent = 'Accrual saved as draft with source trace.'; } catch (error) { if (accrualFeedback) accrualFeedback.textContent = error.message || 'The accrual could not be saved.'; }
     });
+    forecastForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (forecastFeedback) forecastFeedback.textContent = 'Choose an authorized project before calculating a forecast.'; return; }
+      const data = new FormData(forecastForm);
+      const periodId = data.get('periodId')?.trim();
+      const payload = { bac: Number(data.get('bac')), actualCost: Number(data.get('actualCost')), etc: Number(data.get('etc')) };
+      if (!periodId || Object.values(payload).some((value) => !Number.isFinite(value) || value < 0)) { if (forecastFeedback) forecastFeedback.textContent = 'Period and non-negative BAC, AC, and ETC values are required.'; return; }
+      if (forecastFeedback) forecastFeedback.textContent = 'Calculating forecast…';
+      try { const result = await client.calculateForecast(periodId, payload, globalThis.crypto?.randomUUID?.()); if (forecastEac) forecastEac.textContent = result.eac.toLocaleString(); if (forecastVac) forecastVac.textContent = result.vac.toLocaleString(); if (forecastFeedback) forecastFeedback.textContent = 'Forecast calculated. Submit it for authorized human review before lock.'; } catch (error) { if (forecastFeedback) forecastFeedback.textContent = error.message || 'The forecast could not be calculated.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -247,6 +261,7 @@ function startWorkspace(documentRef) {
     commitmentForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to record a commitment.'; });
     actualCostForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to post actual cost.'; });
     accrualForm?.addEventListener('submit', (event) => { event.preventDefault(); if (accrualFeedback) accrualFeedback.textContent = 'Connect to an authorized project workspace to record an accrual.'; });
+    forecastForm?.addEventListener('submit', (event) => { event.preventDefault(); if (forecastFeedback) forecastFeedback.textContent = 'Connect to an authorized project workspace to calculate a forecast.'; });
   }
 }
 

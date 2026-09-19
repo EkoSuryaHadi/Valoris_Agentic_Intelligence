@@ -198,3 +198,18 @@ test('API server creates an accrual only in an open period', async (t) => {
   assert.equal((await response.json()).data.status, 'DRAFT');
   assert.equal(accrualStore[0].periodId, 'r1');
 });
+
+test('API server calculates a forecast for an open period', async (t) => {
+  const forecastStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }],
+    forecastStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/periods/r1/forecast`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'forecast-1', 'content-type': 'application/json' }, body: JSON.stringify({ bac: 1000, actualCost: 600, etc: 500 }) });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).data, { id: forecastStore[0].id, projectId: 'p1', periodId: 'r1', actualCost: 600, etc: 500, eac: 1100, vac: -100 });
+});

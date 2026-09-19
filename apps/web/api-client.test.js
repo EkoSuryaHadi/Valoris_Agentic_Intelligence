@@ -24,8 +24,10 @@ test('API client exposes commitment and actual cost writes', async () => {
   await client.createCommitment('p1', { referenceNo: 'PO-2', vendor: 'Steel Co', amount: 2500 }, 'commitment-1');
   await client.postActualCost('r1', { sourceRef: 'INV-2', amount: 1200 }, 'actual-1');
   await client.createAccrual('r1', { sourceRef: 'GRN-2', amount: 800 }, 'accrual-1');
+  await client.calculateForecast('r1', { bac: 1000, actualCost: 600, etc: 500 }, 'forecast-1');
   assert.equal(calls[0].url, '/api/v1/projects/p1/commitments');
   assert.equal(calls[1].url, '/api/v1/periods/r1/actual-costs');
   assert.equal(calls[1].options.headers['Idempotency-Key'], 'actual-1');
   assert.equal(calls[2].url, '/api/v1/periods/r1/accruals');
+  assert.equal(calls[3].url, '/api/v1/periods/r1/forecast');
 });
