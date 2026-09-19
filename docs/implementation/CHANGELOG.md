@@ -21,6 +21,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the Vercel Node API adapter and deployed an explicit API preview; authentication and PostgreSQL runtime wiring remain gated by staging configuration.
 - Selected Neon PostgreSQL for Vercel Preview and documented the ordered schema, migration, and seed handoff.
 - Added cold-start Neon snapshot loading for the Vercel API adapter with snake_case-to-camelCase domain normalization; repository-backed writes remain gated for the next increment.
+- Wired project creation through the parameterized `ProjectRepository`, preserving the API-generated project ID and tenant scope.
 
 ## 2026-09-18
 

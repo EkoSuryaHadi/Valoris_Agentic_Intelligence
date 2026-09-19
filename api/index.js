@@ -1,6 +1,7 @@
 import { createApiServer } from '../packages/api/src/server.js';
 import { createJwksVerifier } from '../packages/api/src/auth.js';
 import { createPool } from '../packages/db/src/pool.js';
+import { ProjectRepository } from '../packages/db/src/repositories.js';
 import { loadDatabaseStores } from '../packages/api/src/database-stores.js';
 
 function createTokenVerifierFromEnvironment() {
@@ -17,7 +18,8 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
         if (!process.env.DATABASE_URL) return createApiServer({ tokenVerifier, allowInsecureDevHeaders });
         const pool = createPool({ max: 1 });
         const stores = await loadDatabaseStores(pool);
-        return createApiServer({ ...stores, tokenVerifier, allowInsecureDevHeaders });
+        const projectRepository = new ProjectRepository(pool);
+        return createApiServer({ ...stores, persistence: { project: projectRepository }, tokenVerifier, allowInsecureDevHeaders });
       })();
     }
     return serverPromise;

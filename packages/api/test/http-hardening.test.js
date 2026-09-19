@@ -50,6 +50,24 @@ test('API server returns stable hardening responses for protected writes', async
   assert.equal(health.headers.get('referrer-policy'), 'no-referrer');
 });
 
+test('API server persists a created project through the injected repository', async (t) => {
+  let persisted;
+  const server = createApiServer({
+    allowInsecureDevHeaders: true,
+    persistence: { project: { create: async (project) => { persisted = project; } } }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/projects`, {
+    method: 'POST',
+    headers: { 'x-organization-id': 'o1', 'x-project-id': 'p1', 'x-role': 'ADMIN', 'idempotency-key': 'project-1', 'content-type': 'application/json' },
+    body: JSON.stringify({ organizationId: 'o1', code: 'P-001', name: 'Plant', currency: 'USD' })
+  });
+  assert.equal(response.status, 201);
+  assert.equal(persisted.code, 'P-001');
+  assert.equal(persisted.organizationId, 'o1');
+});
+
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
   const server = createApiServer({
     tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),

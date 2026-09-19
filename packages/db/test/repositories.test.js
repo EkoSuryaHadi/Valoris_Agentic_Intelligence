@@ -11,6 +11,14 @@ test('project repository creates tenant-scoped projects with parameterized SQL',
   assert.deepEqual(calls[0].values, ['o1', 'P-1', 'Plant', 'USD']);
 });
 
+test('project repository preserves an API-generated project id', async () => {
+  let captured;
+  const repo = new ProjectRepository({ query: async (text, values) => { captured = { text, values }; return { rows: [{ id: 'p1' }] }; } });
+  await repo.create({ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Plant', currency: 'USD' });
+  assert.match(captured.text, /insert into projects \(id, organization_id/);
+  assert.deepEqual(captured.values, ['p1', 'o1', 'P-1', 'Plant', 'USD']);
+});
+
 test('project repository lists only one organization', async () => {
   const repo = new ProjectRepository({ query: async (text, values) => { assert.match(text, /organization_id = \$1/); assert.deepEqual(values, ['o1']); return { rows: [] }; } });
   assert.deepEqual(await repo.listByOrganization('o1'), []);
