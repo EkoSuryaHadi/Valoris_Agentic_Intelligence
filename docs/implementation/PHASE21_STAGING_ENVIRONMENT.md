@@ -28,3 +28,7 @@ Connect the release candidate to a real staging environment while keeping creden
 - Import, financial writes, approvals, and finding dispositions require the correct human role.
 - Agent recommendations remain advisory and cannot mutate financial truth.
 - Demo seed is isolated from production data.
+
+## Phase 22 handoff
+
+Run `powershell -ExecutionPolicy Bypass -File scripts/browser-uat.ps1 -BaseUrl http://127.0.0.1:4175` after starting the web preview. The script walks all 11 navigation surfaces and fails if a screen does not render or the browser console reports an error.
