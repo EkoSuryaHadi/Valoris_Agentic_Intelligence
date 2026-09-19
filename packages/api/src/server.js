@@ -2,17 +2,17 @@ import { createServer } from 'node:http';
 import { createProjectResponse } from './projects.js';
 import { createHierarchyResponse } from './hierarchy.js';
 import { createBaselineResponse, createBudgetLineResponse, transitionBaselineResponse } from './baseline.js';
-import { validateImportResponse, commitImportResponse } from './agent-import.js';
+import { validateImportResponse, commitImportResponse, createFindingResponse, reviewFindingResponse } from './agent-import.js';
 import { createCommitmentResponse, postActualResponse, createAccrualResponse } from './transactions.js';
 import { calculateForecastResponse } from './forecast.js';
 import { calculateEvmResponse } from './evm.js';
 import { createChangeResponse, incorporateChangeResponse } from './change.js';
-import { cashSummaryResponse } from './risk-cash.js';
+import { cashSummaryResponse, createRiskResponse } from './risk-cash.js';
 import { authenticateRequest } from './auth.js';
 import { createRateLimiter, parseJsonBody } from './http-hardening.js';
 import { getRequestId } from './http-hardening.js';
 
-export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], periodStore = [], tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
+export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], riskStore = [], findingStore = [], periodStore = [], tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
   return createServer(async (request, response) => {
     const requestId = getRequestId(request);
     response.setHeader('x-request-id', requestId);
@@ -51,6 +51,33 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
     const changeMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/changes$/);
     const incorporateMatch = writeUrl.pathname.match(/^\/api\/v1\/changes\/([^/]+)\/incorporate$/);
     const cashFlowMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/cash-flow$/);
+    const riskMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/risks$/);
+    const findingMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/agent-findings$/);
+    const findingReviewMatch = writeUrl.pathname.match(/^\/api\/v1\/agent-findings\/([^/]+)\/review$/);
+    if (request.method === 'POST' && riskMatch) {
+      try {
+        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === riskMatch[1]);
+        const result = createRiskResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; riskStore.push(result.body.data); }
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
+      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
+    }
+    if (request.method === 'POST' && findingMatch) {
+      try {
+        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === findingMatch[1]);
+        const result = createFindingResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; findingStore.push(result.body.data); }
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
+      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
+    }
+    if (request.method === 'POST' && findingReviewMatch) {
+      try {
+        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const finding = findingStore.find((candidate) => candidate.id === findingReviewMatch[1]); const project = projectStore.find((candidate) => candidate.id === finding?.projectId);
+        const result = reviewFindingResponse({ user, project, finding, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
+        if (result.status === 200) Object.assign(finding, result.body.data);
+        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
+      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
+    }
     if (request.method === 'POST' && cashFlowMatch) {
       try {
         const parsed = await parseJsonBody(request, bodyLimitBytes);

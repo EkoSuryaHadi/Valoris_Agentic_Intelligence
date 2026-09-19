@@ -261,3 +261,26 @@ test('API server returns a scoped cash flow variance summary', async (t) => {
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).data.variance, [20, -10]);
 });
+
+test('API server creates a risk and routes an agent finding to human review', async (t) => {
+  const riskStore = [];
+  const findingStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'manager-1', organizationId: 'o1', projectId: 'p1', role: 'COST_MANAGER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    riskStore,
+    findingStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: 'Bearer verified-token', 'idempotency-key': 'risk-1', 'content-type': 'application/json' };
+  const risk = await fetch(`${base}/api/v1/projects/p1/risks`, { method: 'POST', headers, body: JSON.stringify({ title: 'Steel delay', category: 'SUPPLY', probability: 0.5, impact: 1000 }) });
+  assert.equal(risk.status, 201);
+  const finding = await fetch(`${base}/api/v1/projects/p1/agent-findings`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'finding-1' }, body: JSON.stringify({ title: 'Cost trend', statement: 'Civil package is trending above baseline', confidence: 0.88, evidence: [{ source: 'evm:r1', value: 'CPI 0.83' }] }) });
+  assert.equal(finding.status, 201);
+  const findingId = (await finding.json()).data.id;
+  const reviewed = await fetch(`${base}/api/v1/agent-findings/${findingId}/review`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'finding-review-1' }, body: JSON.stringify({ decision: 'ESCALATED', reason: 'Route to cost manager for action' }) });
+  assert.equal(reviewed.status, 200);
+  assert.equal((await reviewed.json()).data.status, 'ESCALATED');
+});

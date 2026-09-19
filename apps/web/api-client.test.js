@@ -28,6 +28,7 @@ test('API client exposes commitment and actual cost writes', async () => {
   await client.calculateEvm('r1', { bac: 1000, plannedProgress: 0.6, actualProgress: 0.5, actualCost: 600 }, 'evm-1');
   await client.createChange('p1', { number: 'VO-2', title: 'Reroute', type: 'DESIGN', estimatedCost: 1000, probability: 0.5 }, 'change-1');
   await client.getCashFlow('p1', { planned: [100], actual: [120], forecast: [120, 50] });
+  await client.createRisk('p1', { title: 'Steel delay', category: 'SUPPLY', probability: 0.5, impact: 1000 }, 'risk-1');
   assert.equal(calls[0].url, '/api/v1/projects/p1/commitments');
   assert.equal(calls[1].url, '/api/v1/periods/r1/actual-costs');
   assert.equal(calls[1].options.headers['Idempotency-Key'], 'actual-1');
@@ -36,4 +37,5 @@ test('API client exposes commitment and actual cost writes', async () => {
   assert.equal(calls[4].url, '/api/v1/periods/r1/evm');
   assert.equal(calls[5].url, '/api/v1/projects/p1/changes');
   assert.equal(calls[6].url, '/api/v1/projects/p1/cash-flow');
+  assert.equal(calls[7].url, '/api/v1/projects/p1/risks');
 });

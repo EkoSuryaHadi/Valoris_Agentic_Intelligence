@@ -37,6 +37,9 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     createChange: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/changes`, { method: 'POST', body, idempotencyKey }),
     incorporateChange: (changeId, idempotencyKey) => request(`/changes/${encodeURIComponent(changeId)}/incorporate`, { method: 'POST', body: {}, idempotencyKey }),
     getCashFlow: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/cash-flow`, { method: 'POST', body }),
+    createRisk: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/risks`, { method: 'POST', body, idempotencyKey }),
+    createFinding: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/agent-findings`, { method: 'POST', body, idempotencyKey }),
+    reviewFinding: (findingId, body, idempotencyKey) => request(`/agent-findings/${encodeURIComponent(findingId)}/review`, { method: 'POST', body, idempotencyKey }),
     previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body }),
     commitImport: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/imports/commit`, { method: 'POST', body, idempotencyKey })
   };

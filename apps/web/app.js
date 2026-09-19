@@ -77,6 +77,10 @@ function startWorkspace(documentRef) {
   const changeFeedback = documentRef.querySelector('[data-change-feedback]');
   const cashFlowForm = documentRef.querySelector('[data-cash-flow-form]');
   const cashFlowFeedback = documentRef.querySelector('[data-cash-flow-feedback]');
+  const riskForm = documentRef.querySelector('[data-risk-form]');
+  const riskFeedback = documentRef.querySelector('[data-risk-feedback]');
+  const findingReviewForm = documentRef.querySelector('[data-finding-review-form]');
+  const findingReviewFeedback = documentRef.querySelector('[data-finding-review-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -251,6 +255,18 @@ function startWorkspace(documentRef) {
       if (cashFlowFeedback) cashFlowFeedback.textContent = 'Calculating cash variance…';
       try { const result = await client.getCashFlow(activeProject.id, payload); if (cashFlowFeedback) cashFlowFeedback.textContent = `Cash variance calculated across ${result.variance.length} aligned periods.`; } catch (error) { if (cashFlowFeedback) cashFlowFeedback.textContent = error.message || 'The cash flow summary could not be calculated.'; }
     });
+    riskForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (riskFeedback) riskFeedback.textContent = 'Choose an authorized project before recording a risk.'; return; }
+      const data = new FormData(riskForm); const payload = { title: data.get('title')?.trim(), category: data.get('category')?.trim(), probability: Number(data.get('probability')), impact: Number(data.get('impact')) };
+      if (!payload.title || !payload.category || !Number.isFinite(payload.probability) || payload.probability < 0 || payload.probability > 1 || !Number.isFinite(payload.impact) || payload.impact < 0) { if (riskFeedback) riskFeedback.textContent = 'Title, category, probability from 0 to 1, and non-negative impact are required.'; return; }
+      if (riskFeedback) riskFeedback.textContent = 'Saving risk…'; try { const result = await client.createRisk(activeProject.id, payload, globalThis.crypto?.randomUUID?.()); riskForm.reset(); if (riskFeedback) riskFeedback.textContent = `Risk saved with ${result.severity} severity and exposure ${result.exposure}.`; } catch (error) { if (riskFeedback) riskFeedback.textContent = error.message || 'The risk could not be saved.'; }
+    });
+    findingReviewForm?.addEventListener('submit', async (event) => {
+      event.preventDefault(); const data = new FormData(findingReviewForm); const findingId = data.get('findingId')?.trim(); const payload = { decision: data.get('decision'), reason: data.get('reason')?.trim() };
+      if (!findingId || !payload.reason) { if (findingReviewFeedback) findingReviewFeedback.textContent = 'Finding ID and review reason are required.'; return; }
+      if (findingReviewFeedback) findingReviewFeedback.textContent = 'Recording human decision…'; try { await client.reviewFinding(findingId, payload, globalThis.crypto?.randomUUID?.()); if (findingReviewFeedback) findingReviewFeedback.textContent = `Finding marked ${payload.decision} with an audit reason.`; } catch (error) { if (findingReviewFeedback) findingReviewFeedback.textContent = error.message || 'The finding decision could not be recorded.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -303,6 +319,8 @@ function startWorkspace(documentRef) {
     evmForm?.addEventListener('submit', (event) => { event.preventDefault(); if (evmFeedback) evmFeedback.textContent = 'Connect to an authorized project workspace to calculate EVM.'; });
     changeForm?.addEventListener('submit', (event) => { event.preventDefault(); if (changeFeedback) changeFeedback.textContent = 'Connect to an authorized project workspace to record a change.'; });
     cashFlowForm?.addEventListener('submit', (event) => { event.preventDefault(); if (cashFlowFeedback) cashFlowFeedback.textContent = 'Connect to an authorized project workspace to calculate cash flow.'; });
+    riskForm?.addEventListener('submit', (event) => { event.preventDefault(); if (riskFeedback) riskFeedback.textContent = 'Connect to an authorized project workspace to record a risk.'; });
+    findingReviewForm?.addEventListener('submit', (event) => { event.preventDefault(); if (findingReviewFeedback) findingReviewFeedback.textContent = 'Connect to an authorized project workspace to review a finding.'; });
   }
 }
 
