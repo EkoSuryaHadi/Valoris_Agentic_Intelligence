@@ -24,6 +24,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Wired project creation through the parameterized `ProjectRepository`, preserving the API-generated project ID and tenant scope.
 - Wired WBS creation through the parameterized `HierarchyRepository`, preserving project scope and the API-generated node ID.
 - Wired baseline draft and budget-line creation through the parameterized `BaselineRepository`; approval and lock guardrails remain unchanged.
+- Wired commitment, actual-cost, and accrual creation through the parameterized `TransactionRepository`; open-period and source-reference validation remain enforced.
 
 ## 2026-09-18
 

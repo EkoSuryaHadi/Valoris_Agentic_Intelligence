@@ -135,7 +135,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
         const project = projectStore.find((candidate) => candidate.id === commitmentMatch[1]);
         const result = createCommitmentResponse({ user, project, existing: commitmentStore, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; commitmentStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.commitment) await persistence.transaction.commitment(result.body.data); commitmentStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -152,7 +152,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const period = periodStore.find((candidate) => candidate.id === actualMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === period?.projectId);
         const result = postActualResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; actualStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.actual) await persistence.transaction.actual(result.body.data); actualStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -169,7 +169,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const period = periodStore.find((candidate) => candidate.id === accrualMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === period?.projectId);
         const result = createAccrualResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; accrualStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.accrual) await persistence.transaction.accrual(result.body.data); accrualStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;

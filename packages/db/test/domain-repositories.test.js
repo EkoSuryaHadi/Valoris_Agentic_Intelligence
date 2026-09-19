@@ -35,3 +35,10 @@ test('transaction repository inserts records for the selected project', async ()
   const repo = new TransactionRepository({ query: async (text, values) => { assert.match(text, /actual_costs/i); assert.deepEqual(values, ['p1', 'r1', 25, 'SRC-1']); return { rows: [{ id: 'a1' }] }; } });
   assert.equal((await repo.postActual({ projectId: 'p1', periodId: 'r1', amount: 25, sourceRef: 'SRC-1' })).id, 'a1');
 });
+
+test('transaction repository preserves API-generated ids', async () => {
+  const repo = new TransactionRepository({ query: async (text, values) => { assert.match(text, /insert into (commitments|actual_costs|accruals) \(id/i); return { rows: [{ id: values[0] }] }; } });
+  assert.equal((await repo.createCommitment({ id: 'c1', projectId: 'p1', referenceNo: 'C-1', vendorName: 'Vendor', amount: 10 })).id, 'c1');
+  assert.equal((await repo.postActual({ id: 'a1', projectId: 'p1', periodId: 'r1', amount: 10, sourceRef: 'A-1' })).id, 'a1');
+  assert.equal((await repo.createAccrual({ id: 'r1', projectId: 'p1', periodId: 'r1', amount: 10, sourceRef: 'G-1' })).id, 'r1');
+});

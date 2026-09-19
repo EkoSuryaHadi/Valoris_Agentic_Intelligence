@@ -2,8 +2,7 @@ import { createApiServer } from '../packages/api/src/server.js';
 import { createJwksVerifier } from '../packages/api/src/auth.js';
 import { createPool } from '../packages/db/src/pool.js';
 import { ProjectRepository } from '../packages/db/src/repositories.js';
-import { HierarchyRepository } from '../packages/db/src/domain-repositories.js';
-import { BaselineRepository } from '../packages/db/src/domain-repositories.js';
+import { HierarchyRepository, BaselineRepository, TransactionRepository } from '../packages/db/src/domain-repositories.js';
 import { loadDatabaseStores } from '../packages/api/src/database-stores.js';
 
 function createTokenVerifierFromEnvironment() {
@@ -23,6 +22,7 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
         const projectRepository = new ProjectRepository(pool);
         const hierarchyRepository = new HierarchyRepository(pool);
         const baselineRepository = new BaselineRepository(pool);
+        const transactionRepository = new TransactionRepository(pool);
         return createApiServer({
           ...stores,
           persistence: {
@@ -31,6 +31,11 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
             baseline: {
               create: (baseline) => baselineRepository.create(baseline),
               addLine: (line) => baselineRepository.addLine(line)
+            },
+            transaction: {
+              commitment: (value) => transactionRepository.createCommitment({ id: value.id, projectId: value.projectId, referenceNo: value.referenceNo, vendorName: value.vendor, amount: value.amount }),
+              actual: (value) => transactionRepository.postActual(value),
+              accrual: (value) => transactionRepository.createAccrual(value)
             }
           },
           tokenVerifier,

@@ -114,6 +114,33 @@ test('API server persists a baseline draft and budget line through repositories'
   assert.equal(persisted.line.baselineId, baselineBody.data.id);
 });
 
+test('API server persists commitment, actual cost, and accrual through repositories', async (t) => {
+  const persisted = {};
+  const server = createApiServer({
+    allowInsecureDevHeaders: true,
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1' }],
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }],
+    persistence: { transaction: {
+      commitment: async (value) => { persisted.commitment = value; },
+      actual: async (value) => { persisted.actual = value; },
+      accrual: async (value) => { persisted.accrual = value; }
+    } }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { 'x-organization-id': 'o1', 'x-project-id': 'p1', 'x-role': 'COST_ENGINEER', 'content-type': 'application/json' };
+  const commitment = await fetch(`${base}/api/v1/projects/p1/commitments`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'commitment-1' }, body: JSON.stringify({ referenceNo: 'COM-1', vendor: 'Vendor', amount: 100 }) });
+  assert.equal(commitment.status, 201);
+  const actual = await fetch(`${base}/api/v1/periods/r1/actual-costs`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'actual-1' }, body: JSON.stringify({ amount: 40, sourceRef: 'INV-1' }) });
+  assert.equal(actual.status, 201);
+  const accrual = await fetch(`${base}/api/v1/periods/r1/accruals`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'accrual-1' }, body: JSON.stringify({ amount: 20, sourceRef: 'GRN-1' }) });
+  assert.equal(accrual.status, 201);
+  assert.equal(persisted.commitment.referenceNo, 'COM-1');
+  assert.equal(persisted.actual.periodId, 'r1');
+  assert.equal(persisted.accrual.periodId, 'r1');
+});
+
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
   const server = createApiServer({
     tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),

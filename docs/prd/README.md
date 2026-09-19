@@ -78,6 +78,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 24 Vercel staging deployment | Web/API previews deployed; Neon snapshot and project write wired; financial write persistence pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; Vercel Preview loads Neon data and persists project creation, while remaining repositories, identity, storage, queue, and staging verification remain |
 | Phase 24 WBS persistence increment | Implemented | `HierarchyRepository` persists scoped WBS creation with API-generated IDs; baseline and financial write paths remain next |
 | Phase 24 baseline persistence increment | Implemented | `BaselineRepository` persists baseline drafts and budget lines; approval and lock remain Human-in-the-Loop |
+| Phase 24 transaction persistence increment | Implemented | `TransactionRepository` persists commitments, actual costs, and accruals with open-period and source-reference guards |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
