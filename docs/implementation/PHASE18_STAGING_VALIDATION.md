@@ -21,4 +21,8 @@ Local release validation, PostgreSQL staging execution, authenticated API smoke 
 1. Configure the deployed API runtime with the staging `DATABASE_URL` and auth values from `.env.example`.
 2. Verify audit events, tenant scope, role boundaries, and locked-period behavior against deployed identity and database services.
 
+The repeatable local/staging database command is `powershell -ExecutionPolicy Bypass -File scripts/staging-db.ps1 -Seed`. It starts or reuses the isolated PostgreSQL container, applies schema and migrations in order, and only loads demo data when `-Seed` is provided.
+
+The runbook was verified both against the existing staging container and a fresh temporary PostgreSQL container; the temporary verification container was removed afterward.
+
 No agent may approve, incorporate, post, lock, or mutate financial truth without an authorized human action.

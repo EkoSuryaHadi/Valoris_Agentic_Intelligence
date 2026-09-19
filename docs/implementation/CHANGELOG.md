@@ -12,6 +12,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Completed API smoke validation for health, security headers, tenant-scoped read, human-controlled WBS write, unauthorized access, and hierarchy rejection.
 - Completed browser UAT across all primary workspace screens; fixed hash-route reload handling and removed the favicon console error.
 - Verified the Node `pg` pool boundary against the running PostgreSQL staging container using `DATABASE_URL`.
+- Added the Phase 19 repeatable PostgreSQL staging runbook with parameterized credentials and opt-in demo seed loading.
 
 ## 2026-09-18
 
