@@ -13,6 +13,7 @@ Local release validation, PostgreSQL staging execution, authenticated API smoke 
 - Seed verification returned one project, one `OPEN` reporting period, and one record for each Phase 2–16 workflow table.
 - API smoke verification passed: `/health` returned `200`, authenticated project read returned `200`, valid human-controlled WBS creation returned `201`, unauthenticated read returned `401`, and invalid hierarchy input returned `422`.
 - Browser UAT passed for Overview, WBS/CBS, Baseline, Import Center, Transactions, Forecast, EVM, Changes, Cash Flow, Risk & Findings, and Audit Trail. Full reload deep-links render the requested view and the browser console is clean.
+- Node database boundary passed: `createPool()` connected through `DATABASE_URL` to PostgreSQL staging and confirmed database `valoris` with one seeded project.
 - Repository worktree is clean and the release commit is pushed to `develop`.
 
 ## Remaining deployment actions

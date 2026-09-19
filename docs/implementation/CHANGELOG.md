@@ -11,6 +11,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Applied schema, migrations 004–006, and deterministic seed to the local PostgreSQL staging container; verified the seeded workflow records and OPEN/NEW statuses.
 - Completed API smoke validation for health, security headers, tenant-scoped read, human-controlled WBS write, unauthorized access, and hierarchy rejection.
 - Completed browser UAT across all primary workspace screens; fixed hash-route reload handling and removed the favicon console error.
+- Verified the Node `pg` pool boundary against the running PostgreSQL staging container using `DATABASE_URL`.
 
 ## 2026-09-18
 
