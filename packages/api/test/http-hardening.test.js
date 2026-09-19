@@ -213,3 +213,18 @@ test('API server calculates a forecast for an open period', async (t) => {
   assert.equal(response.status, 200);
   assert.deepEqual((await response.json()).data, { id: forecastStore[0].id, projectId: 'p1', periodId: 'r1', actualCost: 600, etc: 500, eac: 1100, vac: -100 });
 });
+
+test('API server calculates a scoped EVM snapshot', async (t) => {
+  const evmStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }],
+    evmStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/periods/r1/evm`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'evm-1', 'content-type': 'application/json' }, body: JSON.stringify({ bac: 1000, plannedProgress: 0.6, actualProgress: 0.5, actualCost: 600 }) });
+  assert.equal(response.status, 200);
+  assert.deepEqual((await response.json()).data, { id: evmStore[0].id, projectId: 'p1', periodId: 'r1', pv: 600, ev: 500, ac: 600, cv: -100, sv: -100, cpi: 0.833333, spi: 0.833333 });
+});

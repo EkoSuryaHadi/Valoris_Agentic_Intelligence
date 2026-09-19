@@ -55,6 +55,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | MVP-B commitment and actual-cost write adapters | Implemented | `packages/api/src/server.js`, `apps/web/api-client.js`; tenant-scoped, idempotent writes against project and open reporting period |
 | MVP-B accrual draft workspace | Implemented | `packages/api/src/server.js`, `apps/web/index.html`, `apps/web/app.js`; source-backed accrual drafts are restricted to open periods and remain human-controlled |
 | MVP-B forecast control workspace | Implemented | `packages/api/src/forecast.js`, `packages/api/src/server.js`, `apps/web/index.html`, `apps/web/app.js`; ETC/EAC/VAC calculation remains advisory until authorized human review |
+| MVP-B EVM performance workspace | Implemented | `packages/api/src/evm.js`, `packages/api/src/server.js`, `apps/web/index.html`, `apps/web/app.js`; PV/EV/AC and CPI/SPI/CV/SV remain period snapshots derived from submitted progress |
 | MVP-A budget-line API boundary | Implemented | `packages/api/src/server.js`, `apps/web/api-client.js`; project-scoped budget-line creation with baseline, WBS, cost-code, and amount guardrails |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |

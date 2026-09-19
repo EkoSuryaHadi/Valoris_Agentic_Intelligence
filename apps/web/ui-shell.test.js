@@ -32,6 +32,9 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(html, /Forecast control/);
   assert.match(html, /data-forecast-form/);
   assert.match(html, /data-forecast-feedback/);
+  assert.match(html, /EVM performance/);
+  assert.match(html, /data-evm-form/);
+  assert.match(html, /data-evm-feedback/);
   assert.match(html, /data-transaction-feedback/);
   assert.doesNotMatch(html, /chatbot|chat with/i);
   assert.match(css, /--sidebar:\s*#0F172A/i);

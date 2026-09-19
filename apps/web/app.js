@@ -68,6 +68,11 @@ function startWorkspace(documentRef) {
   const forecastFeedback = documentRef.querySelector('[data-forecast-feedback]');
   const forecastEac = documentRef.querySelector('[data-forecast-eac]');
   const forecastVac = documentRef.querySelector('[data-forecast-vac]');
+  const evmForm = documentRef.querySelector('[data-evm-form]');
+  const evmFeedback = documentRef.querySelector('[data-evm-feedback]');
+  const evmCpi = documentRef.querySelector('[data-evm-cpi]');
+  const evmSpi = documentRef.querySelector('[data-evm-spi]');
+  const evmCv = documentRef.querySelector('[data-evm-cv]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -213,6 +218,16 @@ function startWorkspace(documentRef) {
       if (forecastFeedback) forecastFeedback.textContent = 'Calculating forecast…';
       try { const result = await client.calculateForecast(periodId, payload, globalThis.crypto?.randomUUID?.()); if (forecastEac) forecastEac.textContent = result.eac.toLocaleString(); if (forecastVac) forecastVac.textContent = result.vac.toLocaleString(); if (forecastFeedback) forecastFeedback.textContent = 'Forecast calculated. Submit it for authorized human review before lock.'; } catch (error) { if (forecastFeedback) forecastFeedback.textContent = error.message || 'The forecast could not be calculated.'; }
     });
+    evmForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (evmFeedback) evmFeedback.textContent = 'Choose an authorized project before calculating EVM.'; return; }
+      const data = new FormData(evmForm);
+      const periodId = data.get('periodId')?.trim();
+      const payload = { bac: Number(data.get('bac')), plannedProgress: Number(data.get('plannedProgress')), actualProgress: Number(data.get('actualProgress')), actualCost: Number(data.get('actualCost')) };
+      if (!periodId || !Number.isFinite(payload.bac) || !Number.isFinite(payload.actualCost) || payload.bac < 0 || payload.actualCost < 0 || [payload.plannedProgress, payload.actualProgress].some((value) => !Number.isFinite(value) || value < 0 || value > 1)) { if (evmFeedback) evmFeedback.textContent = 'Period, BAC, AC, and progress values must be valid.'; return; }
+      if (evmFeedback) evmFeedback.textContent = 'Calculating EVM snapshot…';
+      try { const result = await client.calculateEvm(periodId, payload, globalThis.crypto?.randomUUID?.()); if (evmCpi) evmCpi.textContent = result.cpi?.toFixed(2) ?? '—'; if (evmSpi) evmSpi.textContent = result.spi?.toFixed(2) ?? '—'; if (evmCv) evmCv.textContent = result.cv.toLocaleString(); if (evmFeedback) evmFeedback.textContent = 'EVM snapshot calculated from the submitted progress and cost evidence.'; } catch (error) { if (evmFeedback) evmFeedback.textContent = error.message || 'The EVM snapshot could not be calculated.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -262,6 +277,7 @@ function startWorkspace(documentRef) {
     actualCostForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to post actual cost.'; });
     accrualForm?.addEventListener('submit', (event) => { event.preventDefault(); if (accrualFeedback) accrualFeedback.textContent = 'Connect to an authorized project workspace to record an accrual.'; });
     forecastForm?.addEventListener('submit', (event) => { event.preventDefault(); if (forecastFeedback) forecastFeedback.textContent = 'Connect to an authorized project workspace to calculate a forecast.'; });
+    evmForm?.addEventListener('submit', (event) => { event.preventDefault(); if (evmFeedback) evmFeedback.textContent = 'Connect to an authorized project workspace to calculate EVM.'; });
   }
 }
 
