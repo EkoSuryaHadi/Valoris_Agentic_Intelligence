@@ -77,9 +77,9 @@
 **Files:**
 - Modify only as required by verification findings.
 
-- [ ] Run `npm.cmd run test:all`.
-- [ ] Run `npm.cmd run security:scan`.
-- [ ] Run `npm.cmd run build`.
-- [ ] Run `git diff --check` and inspect status.
-- [ ] Commit the completed increment and push both `phase10-api-wiring` and `main`.
-- [ ] Report the completed phase and any external action still requiring the user's Vercel/Neon credentials.
+- [x] Run `npm.cmd run test:all`.
+- [x] Run `npm.cmd run security:scan`.
+- [x] Run `npm.cmd run build`.
+- [x] Run `git diff --check` and inspect status.
+- [x] Commit the completed increment and push both `phase10-api-wiring` and `main`.
+- [x] Report the completed phase and any external action still requiring the user's Vercel/Neon credentials.
