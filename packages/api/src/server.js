@@ -186,7 +186,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const period = periodStore.find((candidate) => candidate.id === forecastMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === period?.projectId);
         const result = calculateForecastResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; forecastStore.push(result.body.data); }
+        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; if (persistence.forecast?.save) await persistence.forecast.save(result.body.data); forecastStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -203,7 +203,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const period = periodStore.find((candidate) => candidate.id === evmMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === period?.projectId);
         const result = calculateEvmResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; evmStore.push(result.body.data); }
+        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; if (persistence.evm?.save) await persistence.evm.save(result.body.data); evmStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;

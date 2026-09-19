@@ -141,6 +141,26 @@ test('API server persists commitment, actual cost, and accrual through repositor
   assert.equal(persisted.accrual.periodId, 'r1');
 });
 
+test('API server persists forecast and EVM snapshots through repositories', async (t) => {
+  const persisted = {};
+  const server = createApiServer({
+    allowInsecureDevHeaders: true,
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1' }],
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }],
+    persistence: { forecast: { save: async (value) => { persisted.forecast = value; } }, evm: { save: async (value) => { persisted.evm = value; } } }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { 'x-organization-id': 'o1', 'x-project-id': 'p1', 'x-role': 'COST_ENGINEER', 'content-type': 'application/json' };
+  const forecast = await fetch(`${base}/api/v1/periods/r1/forecast`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'forecast-1' }, body: JSON.stringify({ bac: 1000, actualCost: 600, etc: 500 }) });
+  assert.equal(forecast.status, 200);
+  const evm = await fetch(`${base}/api/v1/periods/r1/evm`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'evm-1' }, body: JSON.stringify({ bac: 1000, plannedProgress: 0.6, actualProgress: 0.5, actualCost: 600 }) });
+  assert.equal(evm.status, 200);
+  assert.equal(persisted.forecast.periodId, 'r1');
+  assert.equal(persisted.evm.periodId, 'r1');
+});
+
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
   const server = createApiServer({
     tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),

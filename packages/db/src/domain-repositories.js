@@ -25,5 +25,15 @@ export class TransactionRepository {
 }
 export class ForecastRepository {
   constructor(client) { this.client = client; }
-  async save({ projectId, periodId, actualCost, etc, eac, vac }) { const result = await this.client.query('insert into forecasts (project_id,period_id,actual_cost,etc,eac,vac,status) values ($1,$2,$3,$4,$5,$6,$7) returning *', [projectId, periodId, actualCost, etc, eac, vac, 'DRAFT']); return result.rows[0]; }
+  async save({ id, projectId, periodId, actualCost, etc, eac, vac }) {
+    const result = id
+      ? await this.client.query('insert into forecasts (id,project_id,period_id,actual_cost,etc,eac,vac,status) values ($1,$2,$3,$4,$5,$6,$7,$8) returning *', [id, projectId, periodId, actualCost, etc, eac, vac, 'DRAFT'])
+      : await this.client.query('insert into forecasts (project_id,period_id,actual_cost,etc,eac,vac,status) values ($1,$2,$3,$4,$5,$6,$7) returning *', [projectId, periodId, actualCost, etc, eac, vac, 'DRAFT']); return result.rows[0];
+  }
+}
+export class EvmRepository {
+  constructor(client) { this.client = client; }
+  async save({ id, projectId, periodId, bac, plannedProgress, actualProgress, pv, ev, ac, cv, sv, cpi, spi }) {
+    const result = await this.client.query('insert into evm_snapshots (id,project_id,period_id,bac,planned_progress,actual_progress,pv,ev,ac,cv,sv,cpi,spi) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) returning *', [id, projectId, periodId, bac, plannedProgress, actualProgress, pv, ev, ac, cv, sv, cpi, spi]); return result.rows[0];
+  }
 }

@@ -2,7 +2,7 @@ import { createApiServer } from '../packages/api/src/server.js';
 import { createJwksVerifier } from '../packages/api/src/auth.js';
 import { createPool } from '../packages/db/src/pool.js';
 import { ProjectRepository } from '../packages/db/src/repositories.js';
-import { HierarchyRepository, BaselineRepository, TransactionRepository } from '../packages/db/src/domain-repositories.js';
+import { HierarchyRepository, BaselineRepository, TransactionRepository, ForecastRepository, EvmRepository } from '../packages/db/src/domain-repositories.js';
 import { loadDatabaseStores } from '../packages/api/src/database-stores.js';
 
 function createTokenVerifierFromEnvironment() {
@@ -23,6 +23,8 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
         const hierarchyRepository = new HierarchyRepository(pool);
         const baselineRepository = new BaselineRepository(pool);
         const transactionRepository = new TransactionRepository(pool);
+        const forecastRepository = new ForecastRepository(pool);
+        const evmRepository = new EvmRepository(pool);
         return createApiServer({
           ...stores,
           persistence: {
@@ -36,7 +38,9 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
               commitment: (value) => transactionRepository.createCommitment({ id: value.id, projectId: value.projectId, referenceNo: value.referenceNo, vendorName: value.vendor, amount: value.amount }),
               actual: (value) => transactionRepository.postActual(value),
               accrual: (value) => transactionRepository.createAccrual(value)
-            }
+            },
+            forecast: { save: (value) => forecastRepository.save(value) },
+            evm: { save: (value) => evmRepository.save(value) }
           },
           tokenVerifier,
           allowInsecureDevHeaders
