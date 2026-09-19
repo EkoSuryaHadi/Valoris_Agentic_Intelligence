@@ -17,6 +17,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the Phase 21 staging preflight and environment runbook for secret-safe auth, storage, queue, database, and deployment checks.
 - Added the Phase 22 Playwright CLI browser UAT runner for all 11 primary workspace screens and console-error detection.
 - Added the Phase 23 CI security gate with static runtime-pattern scanning, high-severity dependency audit, and a strict-compatible frontend CSP.
+- Deployed the VALORIS web shell to an explicit Vercel preview and documented the remaining API/runtime staging handoff for Phase 24.
 
 ## 2026-09-18
 
