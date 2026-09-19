@@ -75,7 +75,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 21 real staging environment | Preflight implemented; external services pending | `scripts/staging-preflight.ps1`, `docs/implementation/PHASE21_STAGING_ENVIRONMENT.md`; validates non-placeholder configuration and optional auth/storage/queue health endpoints without exposing secrets |
 | Phase 22 automated browser UAT | Implemented locally | `scripts/browser-uat.ps1`; walks all 11 primary screens and fails on missing view or browser console errors |
 | Phase 23 CI/CD and security gate | Implemented | `.github/workflows/ci.yml`, `scripts/security-scan.mjs`, and frontend CSP; full tests, static security scan, and high-severity dependency audit run in CI |
-| Phase 24 Vercel staging deployment | Web/API previews deployed; Neon selected; migration pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; Vercel Preview uses Neon `DATABASE_URL`, while schema/seed, identity, storage, queue, and staging verification remain |
+| Phase 24 Vercel staging deployment | Web/API previews deployed; Neon snapshot wired; write persistence pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; Vercel Preview loads Neon data through `DATABASE_URL`, while repository-backed writes, identity, storage, queue, and staging verification remain |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 
