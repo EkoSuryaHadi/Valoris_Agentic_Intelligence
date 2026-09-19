@@ -397,3 +397,44 @@ test('API server creates a risk and routes an agent finding to human review', as
   assert.equal(reviewed.status, 200);
   assert.equal((await reviewed.json()).data.status, 'ESCALATED');
 });
+
+test('API server persists MVP-C writes and human review events', async (t) => {
+  const persisted = { audit: [] };
+  const changeStore = [];
+  const findingStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'manager-1', organizationId: 'o1', projectId: 'p1', role: 'COST_MANAGER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    changeStore,
+    findingStore,
+    persistence: {
+      change: { create: async (value) => { persisted.change = value; }, incorporate: async (value) => { persisted.incorporated = value; } },
+      risk: { create: async (value) => { persisted.risk = value; } },
+      finding: { create: async (value) => { persisted.finding = value; }, review: async (value) => { persisted.review = value; } },
+      cashFlow: { save: async (value) => { persisted.cashFlow = value; } },
+      audit: { record: async (value) => { persisted.audit.push(value); } }
+    }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { authorization: 'Bearer verified-token', 'content-type': 'application/json' };
+  const change = await fetch(`${base}/api/v1/projects/p1/changes`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'change-persist-1' }, body: JSON.stringify({ number: 'VO-3', title: 'Reroute', type: 'DESIGN', estimatedCost: 1000, probability: 0.5 }) });
+  assert.equal(change.status, 201);
+  const changeId = (await change.json()).data.id;
+  assert.equal(persisted.change.id, changeId);
+  changeStore[0].status = 'APPROVED'; changeStore[0].approvedCost = 900;
+  const incorporated = await fetch(`${base}/api/v1/changes/${changeId}/incorporate`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'change-persist-2' }, body: '{}' });
+  assert.equal(incorporated.status, 200);
+  assert.equal(persisted.incorporated.status, 'INCORPORATED');
+  const risk = await fetch(`${base}/api/v1/projects/p1/risks`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'risk-persist-1' }, body: JSON.stringify({ title: 'Steel delay', category: 'SUPPLY', probability: 0.5, impact: 1000 }) });
+  assert.equal(risk.status, 201); assert.equal(persisted.risk.projectId, 'p1');
+  const finding = await fetch(`${base}/api/v1/projects/p1/agent-findings`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'finding-persist-1' }, body: JSON.stringify({ title: 'Cost trend', statement: 'Review required', confidence: 0.88, evidence: [{ source: 'evm:r1' }] }) });
+  assert.equal(finding.status, 201); const findingId = (await finding.json()).data.id; assert.equal(persisted.finding.id, findingId);
+  const reviewed = await fetch(`${base}/api/v1/agent-findings/${findingId}/review`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'finding-persist-2' }, body: JSON.stringify({ decision: 'ESCALATED', reason: 'Manager review' }) });
+  assert.equal(reviewed.status, 200); assert.equal(persisted.review.status, 'ESCALATED');
+  const cash = await fetch(`${base}/api/v1/projects/p1/cash-flow`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'cash-persist-1' }, body: JSON.stringify({ periodId: 'r1', planned: [100], actual: [120], forecast: [120] }) });
+  assert.equal(cash.status, 200); assert.equal(persisted.cashFlow.projectId, 'p1');
+  assert.ok(persisted.audit.some((event) => event.action === 'CHANGE_INCORPORATED'));
+  assert.ok(persisted.audit.some((event) => event.action === 'FINDING_REVIEWED'));
+});

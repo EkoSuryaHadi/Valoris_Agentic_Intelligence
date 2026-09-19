@@ -41,6 +41,7 @@ if ($created) { Apply-Sql 'docs/database/schema.sql' }
 Apply-Sql 'database/migrations/004_phase2_transactions.sql'
 Apply-Sql 'database/migrations/005_phase3_forecast.sql'
 Apply-Sql 'database/migrations/006_phase4_release_readiness.sql'
+Apply-Sql 'database/migrations/007_phase24_audit_trail.sql'
 if ($Seed) { Apply-Sql 'database/seed.sql' }
 
 Write-Output "PostgreSQL ready: postgresql://$DatabaseUser@127.0.0.1:$Port/$DatabaseName"

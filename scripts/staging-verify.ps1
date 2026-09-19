@@ -30,6 +30,9 @@ if ($BearerToken) {
     $wbs = Get-Json "$base/api/v1/projects/$ProjectId/wbs" $headers
     if ($wbs.Status -ne 200) { throw "Project-scoped WBS read failed with HTTP $($wbs.Status)." }
     Write-Output "Project scope OK: $ProjectId WBS read returned HTTP $($wbs.Status)"
+    $baselines = Get-Json "$base/api/v1/projects/$ProjectId/baselines" $headers
+    if ($baselines.Status -ne 200) { throw "Project-scoped baseline read failed with HTTP $($baselines.Status)." }
+    Write-Output "Project scope OK: $ProjectId baseline read returned HTTP $($baselines.Status)"
   }
 } else {
   Write-Output 'Authenticated checks skipped: provide -BearerToken for staging identity verification.'

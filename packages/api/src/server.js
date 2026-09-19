@@ -12,7 +12,7 @@ import { authenticateRequest } from './auth.js';
 import { createRateLimiter, parseJsonBody } from './http-hardening.js';
 import { getRequestId } from './http-hardening.js';
 
-export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], riskStore = [], findingStore = [], periodStore = [], persistence = {}, tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
+export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], riskStore = [], findingStore = [], cashFlowStore = [], auditStore = [], periodStore = [], persistence = {}, tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
   return createServer(async (request, response) => {
     const requestId = getRequestId(request);
     response.setHeader('x-request-id', requestId);
@@ -61,7 +61,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
       try {
         const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === riskMatch[1]);
         const result = createRiskResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; riskStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.risk?.create) await persistence.risk.create(result.body.data); riskStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
       } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
     }
@@ -69,7 +69,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
       try {
         const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === findingMatch[1]);
         const result = createFindingResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; findingStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.finding?.create) await persistence.finding.create(result.body.data); findingStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
       } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
     }
@@ -77,7 +77,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
       try {
         const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const finding = findingStore.find((candidate) => candidate.id === findingReviewMatch[1]); const project = projectStore.find((candidate) => candidate.id === finding?.projectId);
         const result = reviewFindingResponse({ user, project, finding, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) Object.assign(finding, result.body.data);
+        if (result.status === 200) { Object.assign(finding, result.body.data); if (persistence.finding?.review) await persistence.finding.review({ id: finding.id, reviewedBy: user.userId, status: finding.status, reason: finding.reason }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'FINDING_REVIEWED', entityType: 'AGENT_FINDING', entityId: finding.id, newValue: result.body.data, reason: finding.reason }); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
       } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
     }
@@ -87,6 +87,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
         const project = projectStore.find((candidate) => candidate.id === cashFlowMatch[1]);
         const result = cashSummaryResponse({ user, project, body: parsed });
+        if (result.status === 200) { const snapshot = { id: crypto.randomUUID(), projectId: project.id, periodId: parsed.periodId ?? null, planned: parsed.planned, actual: parsed.actual, forecast: parsed.forecast ?? [], variance: result.body.data.variance, cumulativeForecast: result.body.data.cumulativeForecast }; if (persistence.cashFlow?.save) await persistence.cashFlow.save(snapshot); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -102,7 +103,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
         const project = projectStore.find((candidate) => candidate.id === changeMatch[1]);
         const result = createChangeResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; changeStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.change?.create) await persistence.change.create(result.body.data); changeStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -119,7 +120,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const change = changeStore.find((candidate) => candidate.id === incorporateMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === change?.projectId);
         const result = incorporateChangeResponse({ user, project, change, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) change.status = result.body.data.status;
+        if (result.status === 200) { change.status = result.body.data.status; change.approvedCost = result.body.data.approvedCost; if (persistence.change?.incorporate) await persistence.change.incorporate({ id: change.id, approvedCost: change.approvedCost, status: change.status }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'CHANGE_INCORPORATED', entityType: 'CHANGE', entityId: change.id, newValue: result.body.data }); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -274,7 +275,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const baseline = baselineStore.find((candidate) => candidate.id === transitionMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === baseline?.projectId);
         const result = transitionBaselineResponse({ user, project, baseline, nextStatus: parsed.nextStatus, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { baseline.status = result.body.data.status; result.body.meta.reason = parsed.reason.trim(); }
+        if (result.status === 200) { const previousStatus = baseline.status; baseline.status = result.body.data.status; result.body.meta.reason = parsed.reason.trim(); if (persistence.baseline?.transition) await persistence.baseline.transition({ id: baseline.id, status: baseline.status }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'BASELINE_TRANSITIONED', entityType: 'BASELINE', entityId: baseline.id, oldValue: { status: previousStatus }, newValue: { status: baseline.status }, reason: parsed.reason.trim() }); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;

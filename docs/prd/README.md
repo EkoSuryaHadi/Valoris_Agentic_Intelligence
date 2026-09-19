@@ -76,10 +76,12 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 22 automated browser UAT | Implemented locally | `scripts/browser-uat.ps1`; walks all 11 primary screens and fails on missing view or browser console errors |
 | Phase 23 CI/CD and security gate | Implemented | `.github/workflows/ci.yml`, `scripts/security-scan.mjs`, and frontend CSP; full tests, static security scan, and high-severity dependency audit run in CI |
 | Phase 24 Vercel staging deployment | Web/API previews deployed; Neon snapshot and project, WBS, baseline, transaction, forecast, and EVM writes wired; external services and staging verification pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; Vercel Preview loads Neon data and persists the MVP-B financial workflow, while identity, storage, queue, remaining MVP-C/D writes, and staging verification remain |
-| Phase 24 WBS persistence increment | Implemented | `HierarchyRepository` persists scoped WBS creation with API-generated IDs; baseline and financial write paths remain next |
+| Phase 24 WBS persistence increment | Implemented | `HierarchyRepository` persists scoped WBS creation with API-generated IDs |
 | Phase 24 baseline persistence increment | Implemented | `BaselineRepository` persists baseline drafts and budget lines; approval and lock remain Human-in-the-Loop |
 | Phase 24 transaction persistence increment | Implemented | `TransactionRepository` persists commitments, actual costs, and accruals with open-period and source-reference guards |
 | Phase 24 forecast/EVM persistence increment | Implemented | `ForecastRepository` and `EvmRepository` persist ETC/EAC/VAC and PV/EV/AC performance snapshots with API-generated IDs; Human-in-the-Loop approval remains unchanged |
+| Phase 24 MVP-C persistence increment | Implemented | `ChangeRepository`, `RiskRepository`, `FindingRepository`, and `CashFlowRepository` persist change, risk, human-reviewed finding, and cash-flow snapshots; `AuditRepository` records human decisions |
+| Phase 25 release completion | In progress | Migration 007, staging runbook, and release evidence are prepared; real Vercel identity/storage/queue credentials and deployed UAT remain external gates |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

@@ -15,7 +15,7 @@ Connect the release candidate to a real staging environment while keeping creden
 
 ## Required services
 
-- PostgreSQL with migrations 004–006 applied
+- PostgreSQL with migrations 004–007 applied
 - Auth provider issuing a JWT with issuer, audience, expiry, organization, project, and role claims
 - Object storage bucket for source evidence and import artifacts
 - Queue/worker endpoint for asynchronous jobs

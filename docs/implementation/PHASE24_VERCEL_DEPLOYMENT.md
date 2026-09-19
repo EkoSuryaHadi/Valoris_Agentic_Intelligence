@@ -2,7 +2,7 @@
 
 ## Status
 
-Web and API preview deployments are ready on Vercel. Neon is selected as the staging PostgreSQL provider; migrations, seed, and API runtime wiring remain pending.
+Web and API preview deployments are ready on Vercel. Neon is selected as the staging PostgreSQL provider; migrations 004–007, seed, and API runtime wiring are implemented for Preview, while external identity/storage/queue validation remains deployment-gated.
 
 ## Deployment
 
@@ -41,9 +41,9 @@ Commitment, actual-cost, and accrual creation are now persisted through `Transac
 
 Forecast/ETC/EAC and EVM snapshots are now persisted through `ForecastRepository` and `EvmRepository`; period lock and formula guardrails remain enforced.
 
-1. Apply `docs/database/schema.sql`, migrations `004–006`, and `database/seed.sql` once to the Neon Preview branch.
+1. Apply `docs/database/schema.sql`, migrations `004–007`, and `database/seed.sql` once to the Neon Preview branch.
 2. Configure Auth issuer/client/JWKS values, `OBJECT_STORAGE_BUCKET`, `QUEUE_URL`, and `ENCRYPTION_KEY` in the staging secret manager.
-3. Complete repository-backed change, risk, finding, and audit writes, then run `scripts/staging-preflight.ps1` and `scripts/staging-verify.ps1` against the real staging API.
+3. Repository-backed change, risk, finding, cash-flow, and audit writes are complete; run `scripts/staging-preflight.ps1` and `scripts/staging-verify.ps1` against the real staging API.
 4. Configure the web runtime API base URL and repeat browser UAT against the deployed web URL.
 
 ## Guardrails

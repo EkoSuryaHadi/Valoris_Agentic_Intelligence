@@ -2,7 +2,7 @@ import { createApiServer } from '../packages/api/src/server.js';
 import { createJwksVerifier } from '../packages/api/src/auth.js';
 import { createPool } from '../packages/db/src/pool.js';
 import { ProjectRepository } from '../packages/db/src/repositories.js';
-import { HierarchyRepository, BaselineRepository, TransactionRepository, ForecastRepository, EvmRepository } from '../packages/db/src/domain-repositories.js';
+import { HierarchyRepository, BaselineRepository, TransactionRepository, ForecastRepository, EvmRepository, ChangeRepository, RiskRepository, FindingRepository, CashFlowRepository, AuditRepository } from '../packages/db/src/domain-repositories.js';
 import { loadDatabaseStores } from '../packages/api/src/database-stores.js';
 
 function createTokenVerifierFromEnvironment() {
@@ -25,6 +25,11 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
         const transactionRepository = new TransactionRepository(pool);
         const forecastRepository = new ForecastRepository(pool);
         const evmRepository = new EvmRepository(pool);
+        const changeRepository = new ChangeRepository(pool);
+        const riskRepository = new RiskRepository(pool);
+        const findingRepository = new FindingRepository(pool);
+        const cashFlowRepository = new CashFlowRepository(pool);
+        const auditRepository = new AuditRepository(pool);
         return createApiServer({
           ...stores,
           persistence: {
@@ -40,7 +45,12 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
               accrual: (value) => transactionRepository.createAccrual(value)
             },
             forecast: { save: (value) => forecastRepository.save(value) },
-            evm: { save: (value) => evmRepository.save(value) }
+            evm: { save: (value) => evmRepository.save(value) },
+            change: { create: (value) => changeRepository.create(value), incorporate: (value) => changeRepository.incorporate(value) },
+            risk: { create: (value) => riskRepository.create(value) },
+            finding: { create: (value) => findingRepository.create(value), review: (value) => findingRepository.review(value) },
+            cashFlow: { save: (value) => cashFlowRepository.save(value) },
+            audit: { record: (value) => auditRepository.record(value) }
           },
           tokenVerifier,
           allowInsecureDevHeaders
