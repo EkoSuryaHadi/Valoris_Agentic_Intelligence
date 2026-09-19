@@ -24,6 +24,7 @@ Web and API preview deployments are ready on Vercel. Neon is selected as the sta
 
 - Vercel project: `valoris-api`
 - Preview URL: `https://valoris-hlczt04gp-ekosuryahadis-projects.vercel.app`
+- Current staging URL: `https://valoris-agentic-api.vercel.app`
 - Inspect URL: `https://vercel.com/ekosuryahadis-projects/valoris-api/BuB9Pzey9iWJfzSD9c1e6m6eao9y`
 - Deployment type: preview
 
