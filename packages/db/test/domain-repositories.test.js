@@ -21,6 +21,16 @@ test('baseline repository stores budget lines with parameterized values', async 
   assert.equal((await repo.addLine({ baselineId: 'b1', wbsId: 'w1', costCodeId: 'c1', amount: 100 })).id, 'l1');
 });
 
+test('baseline repository creates a draft with an API-generated id', async () => {
+  const repo = new BaselineRepository({ query: async (text, values) => { assert.match(text, /insert into baselines/i); assert.deepEqual(values, ['b1', 'p1', 1, 'DRAFT']); return { rows: [{ id: 'b1' }] }; } });
+  assert.equal((await repo.create({ id: 'b1', projectId: 'p1', version: 1, status: 'DRAFT' })).id, 'b1');
+});
+
+test('baseline repository preserves an API-generated budget line id', async () => {
+  const repo = new BaselineRepository({ query: async (text, values) => { assert.match(text, /insert into budget_lines \(id/i); assert.deepEqual(values, ['l1', 'b1', 'w1', 'c1', 100]); return { rows: [{ id: 'l1' }] }; } });
+  assert.equal((await repo.addLine({ id: 'l1', baselineId: 'b1', wbsId: 'w1', costCodeId: 'c1', amount: 100 })).id, 'l1');
+});
+
 test('transaction repository inserts records for the selected project', async () => {
   const repo = new TransactionRepository({ query: async (text, values) => { assert.match(text, /actual_costs/i); assert.deepEqual(values, ['p1', 'r1', 25, 'SRC-1']); return { rows: [{ id: 'a1' }] }; } });
   assert.equal((await repo.postActual({ projectId: 'p1', periodId: 'r1', amount: 25, sourceRef: 'SRC-1' })).id, 'a1');

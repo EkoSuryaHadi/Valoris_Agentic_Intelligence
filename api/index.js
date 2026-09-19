@@ -3,6 +3,7 @@ import { createJwksVerifier } from '../packages/api/src/auth.js';
 import { createPool } from '../packages/db/src/pool.js';
 import { ProjectRepository } from '../packages/db/src/repositories.js';
 import { HierarchyRepository } from '../packages/db/src/domain-repositories.js';
+import { BaselineRepository } from '../packages/db/src/domain-repositories.js';
 import { loadDatabaseStores } from '../packages/api/src/database-stores.js';
 
 function createTokenVerifierFromEnvironment() {
@@ -21,11 +22,16 @@ export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnv
         const stores = await loadDatabaseStores(pool);
         const projectRepository = new ProjectRepository(pool);
         const hierarchyRepository = new HierarchyRepository(pool);
+        const baselineRepository = new BaselineRepository(pool);
         return createApiServer({
           ...stores,
           persistence: {
             project: projectRepository,
-            hierarchy: { create: (node) => hierarchyRepository.create('wbs_nodes', node) }
+            hierarchy: { create: (node) => hierarchyRepository.create('wbs_nodes', node) },
+            baseline: {
+              create: (baseline) => baselineRepository.create(baseline),
+              addLine: (line) => baselineRepository.addLine(line)
+            }
           },
           tokenVerifier,
           allowInsecureDevHeaders

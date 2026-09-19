@@ -291,7 +291,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const baseline = baselineStore.find((candidate) => candidate.id === lineMatch[1]);
         const project = projectStore.find((candidate) => candidate.id === baseline?.projectId);
         const result = createBudgetLineResponse({ user, project, baseline, wbs: wbsStore.find((node) => node.id === parsed.wbsId), costCode: costCodeStore.find((code) => code.id === parsed.costCodeId), amount: parsed.amount, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; budgetLineStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.baseline?.addLine) await persistence.baseline.addLine(result.body.data); budgetLineStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
@@ -307,7 +307,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
         const project = projectStore.find((candidate) => candidate.id === baselineMatch[1]);
         const result = createBaselineResponse({ user, project, existingBaselines: baselineStore.filter((baseline) => baseline.projectId === baselineMatch[1]), idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; baselineStore.push(result.body.data); }
+        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.baseline?.create) await persistence.baseline.create(result.body.data); baselineStore.push(result.body.data); }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
       } catch (error) {
         const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;

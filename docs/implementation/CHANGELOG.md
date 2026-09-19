@@ -23,6 +23,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added cold-start Neon snapshot loading for the Vercel API adapter with snake_case-to-camelCase domain normalization; repository-backed writes remain gated for the next increment.
 - Wired project creation through the parameterized `ProjectRepository`, preserving the API-generated project ID and tenant scope.
 - Wired WBS creation through the parameterized `HierarchyRepository`, preserving project scope and the API-generated node ID.
+- Wired baseline draft and budget-line creation through the parameterized `BaselineRepository`; approval and lock guardrails remain unchanged.
 
 ## 2026-09-18
 

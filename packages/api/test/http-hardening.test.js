@@ -87,6 +87,33 @@ test('API server persists a created WBS node through the injected repository', a
   assert.equal(persisted.code, '1');
 });
 
+test('API server persists a baseline draft and budget line through repositories', async (t) => {
+  const persisted = { baseline: null, line: null };
+  const server = createApiServer({
+    allowInsecureDevHeaders: true,
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1' }],
+    wbsStore: [{ id: 'w1', projectId: 'p1', code: '1', name: 'Engineering', level: 1 }],
+    costCodeStore: [{ id: 'c1', projectId: 'p1', code: 'LABOR', name: 'Labor' }],
+    persistence: {
+      baseline: {
+        create: async (baseline) => { persisted.baseline = baseline; },
+        addLine: async (line) => { persisted.line = line; }
+      }
+    }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const base = `http://127.0.0.1:${server.address().port}`;
+  const headers = { 'x-organization-id': 'o1', 'x-project-id': 'p1', 'x-role': 'COST_ENGINEER', 'content-type': 'application/json' };
+  const baseline = await fetch(`${base}/api/v1/projects/p1/baselines`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'baseline-1' }, body: '{}' });
+  assert.equal(baseline.status, 201);
+  const baselineBody = await baseline.json();
+  const line = await fetch(`${base}/api/v1/baselines/${baselineBody.data.id}/lines`, { method: 'POST', headers: { ...headers, 'idempotency-key': 'line-1' }, body: JSON.stringify({ wbsId: 'w1', costCodeId: 'c1', amount: 100 }) });
+  assert.equal(line.status, 201);
+  assert.equal(persisted.baseline.projectId, 'p1');
+  assert.equal(persisted.line.baselineId, baselineBody.data.id);
+});
+
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
   const server = createApiServer({
     tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),

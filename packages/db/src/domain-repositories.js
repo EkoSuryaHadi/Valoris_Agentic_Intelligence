@@ -10,7 +10,12 @@ export class HierarchyRepository {
 }
 export class BaselineRepository {
   constructor(client) { this.client = client; }
-  async addLine({ baselineId, wbsId, costCodeId, amount }) { const result = await this.client.query('insert into budget_lines (baseline_id,wbs_id,cost_code_id,amount) values ($1,$2,$3,$4) returning *', [baselineId, wbsId, costCodeId, amount]); return result.rows[0]; }
+  async create({ id, projectId, version, status }) { const result = await this.client.query('insert into baselines (id,project_id,version,status) values ($1,$2,$3,$4) returning *', [id, projectId, version, status]); return result.rows[0]; }
+  async addLine({ id, baselineId, wbsId, costCodeId, amount }) {
+    const result = id
+      ? await this.client.query('insert into budget_lines (id,baseline_id,wbs_id,cost_code_id,amount) values ($1,$2,$3,$4,$5) returning *', [id, baselineId, wbsId, costCodeId, amount])
+      : await this.client.query('insert into budget_lines (baseline_id,wbs_id,cost_code_id,amount) values ($1,$2,$3,$4) returning *', [baselineId, wbsId, costCodeId, amount]); return result.rows[0];
+  }
 }
 export class TransactionRepository {
   constructor(client) { this.client = client; }
