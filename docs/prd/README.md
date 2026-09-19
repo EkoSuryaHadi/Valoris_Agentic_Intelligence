@@ -76,6 +76,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 22 automated browser UAT | Implemented locally | `scripts/browser-uat.ps1`; walks all 11 primary screens and fails on missing view or browser console errors |
 | Phase 23 CI/CD and security gate | Implemented | `.github/workflows/ci.yml`, `scripts/security-scan.mjs`, and frontend CSP; full tests, static security scan, and high-severity dependency audit run in CI |
 | Phase 24 Vercel staging deployment | Web/API previews deployed; Neon snapshot and project write wired; financial write persistence pending | `docs/implementation/PHASE24_VERCEL_DEPLOYMENT.md`; Vercel Preview loads Neon data and persists project creation, while remaining repositories, identity, storage, queue, and staging verification remain |
+| Phase 24 WBS persistence increment | Implemented | `HierarchyRepository` persists scoped WBS creation with API-generated IDs; baseline and financial write paths remain next |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

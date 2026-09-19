@@ -68,6 +68,25 @@ test('API server persists a created project through the injected repository', as
   assert.equal(persisted.organizationId, 'o1');
 });
 
+test('API server persists a created WBS node through the injected repository', async (t) => {
+  let persisted;
+  const server = createApiServer({
+    allowInsecureDevHeaders: true,
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1' }],
+    persistence: { hierarchy: { create: async (node) => { persisted = node; } } }
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/projects/p1/wbs`, {
+    method: 'POST',
+    headers: { 'x-organization-id': 'o1', 'x-project-id': 'p1', 'x-role': 'COST_ENGINEER', 'idempotency-key': 'wbs-1', 'content-type': 'application/json' },
+    body: JSON.stringify({ code: '1', name: 'Engineering', level: 1 })
+  });
+  assert.equal(response.status, 201);
+  assert.equal(persisted.projectId, 'p1');
+  assert.equal(persisted.code, '1');
+});
+
 test('API server exposes tenant-scoped project, WBS, and baseline reads', async (t) => {
   const server = createApiServer({
     tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),

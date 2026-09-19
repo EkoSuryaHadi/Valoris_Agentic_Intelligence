@@ -1,9 +1,11 @@
 const TABLES = new Set(['wbs_nodes', 'cbs_nodes']);
 export class HierarchyRepository {
   constructor(client) { this.client = client; }
-  async create(table, { projectId, parentId, code, name, level }) {
+  async create(table, { id, projectId, parentId, code, name, level }) {
     if (!TABLES.has(table)) throw new Error('unsupported hierarchy table');
-    const result = await this.client.query(`insert into ${table} (project_id,parent_id,code,name,level) values ($1,$2,$3,$4,$5) returning *`, [projectId, parentId, code, name, level]); return result.rows[0];
+    const result = id
+      ? await this.client.query(`insert into ${table} (id,project_id,parent_id,code,name,level) values ($1,$2,$3,$4,$5,$6) returning *`, [id, projectId, parentId, code, name, level])
+      : await this.client.query(`insert into ${table} (project_id,parent_id,code,name,level) values ($1,$2,$3,$4,$5) returning *`, [projectId, parentId, code, name, level]); return result.rows[0];
   }
 }
 export class BaselineRepository {

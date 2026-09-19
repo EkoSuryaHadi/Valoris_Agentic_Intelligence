@@ -8,6 +8,14 @@ test('hierarchy repository creates a project-scoped node', async () => {
   assert.equal(result.id, 'w1'); assert.deepEqual(calls[0].values, ['p1', null, '1', 'Engineering', 1]);
 });
 
+test('hierarchy repository preserves an API-generated node id', async () => {
+  let captured;
+  const repo = new HierarchyRepository({ query: async (text, values) => { captured = { text, values }; return { rows: [{ id: 'w1' }] }; } });
+  await repo.create('wbs_nodes', { id: 'w1', projectId: 'p1', parentId: null, code: '1', name: 'Engineering', level: 1 });
+  assert.match(captured.text, /insert into wbs_nodes \(id,project_id/);
+  assert.deepEqual(captured.values, ['w1', 'p1', null, '1', 'Engineering', 1]);
+});
+
 test('baseline repository stores budget lines with parameterized values', async () => {
   const repo = new BaselineRepository({ query: async (text, values) => { assert.match(text, /budget_lines/i); assert.deepEqual(values, ['b1', 'w1', 'c1', 100]); return { rows: [{ id: 'l1' }] }; } });
   assert.equal((await repo.addLine({ baselineId: 'b1', wbsId: 'w1', costCodeId: 'c1', amount: 100 })).id, 'l1');

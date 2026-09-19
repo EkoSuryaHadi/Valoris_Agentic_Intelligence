@@ -221,6 +221,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
         const result = createHierarchyResponse({ user, project, existingNodes: wbsStore.filter((node) => node.projectId === wbsMatch[1]), body: parsed, idempotencyKey: request.headers['idempotency-key'] });
         if (result.status === 201) {
           result.body.data = { id: crypto.randomUUID(), ...result.body.data };
+          if (persistence.hierarchy?.create) await persistence.hierarchy.create(result.body.data);
           wbsStore.push(result.body.data);
         }
         response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });

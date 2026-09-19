@@ -34,6 +34,8 @@ The first CLI deployment was automatically assigned a production target by Verce
 
 ## Remaining Phase 24 work
 
+WBS creation is now persisted through `HierarchyRepository`; baseline and remaining financial write paths are still pending.
+
 1. Apply `docs/database/schema.sql`, migrations `004–006`, and `database/seed.sql` once to the Neon Preview branch.
 2. Configure Auth issuer/client/JWKS values, `OBJECT_STORAGE_BUCKET`, `QUEUE_URL`, and `ENCRYPTION_KEY` in the staging secret manager.
 3. Complete repository-backed WBS, baseline, transaction, forecast, EVM, change, risk, finding, and audit writes, then run `scripts/staging-preflight.ps1` and `scripts/staging-verify.ps1` against the real staging API.
