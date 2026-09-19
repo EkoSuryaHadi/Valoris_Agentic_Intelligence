@@ -8,6 +8,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Expanded deterministic demo seed through the end-to-end cost-control workflow.
 - Updated CI and `npm test` to execute web, API, database, and domain suites.
 - Completed local release smoke validation and documented the remaining staging-only actions for Phase 18.
+- Applied schema, migrations 004–006, and deterministic seed to the local PostgreSQL staging container; verified the seeded workflow records and OPEN/NEW statuses.
 
 ## 2026-09-18
 
