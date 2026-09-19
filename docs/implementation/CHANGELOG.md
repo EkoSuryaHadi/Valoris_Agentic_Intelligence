@@ -13,6 +13,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Completed browser UAT across all primary workspace screens; fixed hash-route reload handling and removed the favicon console error.
 - Verified the Node `pg` pool boundary against the running PostgreSQL staging container using `DATABASE_URL`.
 - Added the Phase 19 repeatable PostgreSQL staging runbook with parameterized credentials and opt-in demo seed loading.
+- Added the Phase 20 deployment verification script for API health, security headers, authenticated project access, and optional project scope checks.
 
 ## 2026-09-18
 

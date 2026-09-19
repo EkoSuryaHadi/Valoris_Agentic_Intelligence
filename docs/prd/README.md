@@ -71,6 +71,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Release persistence, deterministic demo seed, and full CI test gate | Implemented | `database/migrations/006_phase4_release_readiness.sql`, `database/seed.sql`, `.github/workflows/ci.yml`; covers EVM, change, risk, finding, cash-flow records and web/API/database/domain regression suites |
 | Phase 18 staging validation | Local staging validation complete; deployment verification pending | `docs/implementation/PHASE18_STAGING_VALIDATION.md`; 96 automated tests, PostgreSQL seed, Node `pg` connection, API smoke, all primary screen UAT, deep-link reload, and clean browser console verified |
 | Phase 19 deployment runbook | Implemented | `scripts/staging-db.ps1`; repeatable, parameterized PostgreSQL startup and schema/migration/seed application without committed credentials |
+| Phase 20 deployment verification | Implemented | `scripts/staging-verify.ps1`; health, security-header, authenticated project, and optional project-scope checks using runtime-supplied credentials |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

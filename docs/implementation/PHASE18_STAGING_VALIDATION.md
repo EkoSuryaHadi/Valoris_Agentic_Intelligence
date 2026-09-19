@@ -25,4 +25,6 @@ The repeatable local/staging database command is `powershell -ExecutionPolicy By
 
 The runbook was verified both against the existing staging container and a fresh temporary PostgreSQL container; the temporary verification container was removed afterward.
 
+For deployed API verification, use `powershell -ExecutionPolicy Bypass -File scripts/staging-verify.ps1 -ApiBaseUrl <url> -BearerToken <token> -ProjectId <id>`. The token is supplied at execution time and is never persisted.
+
 No agent may approve, incorporate, post, lock, or mutate financial truth without an authorized human action.
