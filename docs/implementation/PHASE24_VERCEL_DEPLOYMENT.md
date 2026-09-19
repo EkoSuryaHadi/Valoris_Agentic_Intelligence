@@ -2,7 +2,7 @@
 
 ## Status
 
-Web and API preview deployments are ready on Vercel. External staging services and API persistence are not yet connected.
+Web and API preview deployments are ready on Vercel. Neon is selected as the staging PostgreSQL provider; migrations, seed, and API runtime wiring remain pending.
 
 ## Deployment
 
@@ -11,6 +11,14 @@ Web and API preview deployments are ready on Vercel. External staging services a
 - Preview URL: `https://web-h25hfsut9-ekosuryahadis-projects.vercel.app`
 - Inspect URL: `https://vercel.com/ekosuryahadis-projects/web/93W8SEChGCNz5gYwF83L7C8jfBsP`
 - Deployment type: preview
+
+### Database
+
+- Provider: Neon PostgreSQL
+- Vercel environment: `Preview`
+- Neon deployment branch: `Preview`
+- Runtime variable: `DATABASE_URL`
+- Use Neon's pooled connection URI for the Vercel Function runtime.
 
 ### API preview
 
@@ -25,9 +33,9 @@ The first CLI deployment was automatically assigned a production target by Verce
 
 ## Remaining Phase 24 work
 
-1. Configure `DATABASE_URL`, Auth issuer/client/JWKS values, `OBJECT_STORAGE_BUCKET`, `QUEUE_URL`, and `ENCRYPTION_KEY` in the staging secret manager.
-2. Wire the API runtime to the PostgreSQL repository and apply migrations/seed only to the isolated staging database.
-3. Run `scripts/staging-preflight.ps1` and `scripts/staging-verify.ps1` against the real staging API.
+1. Apply `docs/database/schema.sql`, migrations `004–006`, and `database/seed.sql` once to the Neon Preview branch.
+2. Configure Auth issuer/client/JWKS values, `OBJECT_STORAGE_BUCKET`, `QUEUE_URL`, and `ENCRYPTION_KEY` in the staging secret manager.
+3. Wire the API runtime to the PostgreSQL repository and run `scripts/staging-preflight.ps1` and `scripts/staging-verify.ps1` against the real staging API.
 4. Configure the web runtime API base URL and repeat browser UAT against the deployed web URL.
 
 ## Guardrails

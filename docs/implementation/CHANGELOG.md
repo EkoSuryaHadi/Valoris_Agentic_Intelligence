@@ -19,6 +19,7 @@ This file links implementation increments to the PRD contract. Update it in the 
 - Added the Phase 23 CI security gate with static runtime-pattern scanning, high-severity dependency audit, and a strict-compatible frontend CSP.
 - Deployed the VALORIS web shell to an explicit Vercel preview and documented the remaining API/runtime staging handoff for Phase 24.
 - Added the Vercel Node API adapter and deployed an explicit API preview; authentication and PostgreSQL runtime wiring remain gated by staging configuration.
+- Selected Neon PostgreSQL for Vercel Preview and documented the ordered schema, migration, and seed handoff.
 
 ## 2026-09-18
 
