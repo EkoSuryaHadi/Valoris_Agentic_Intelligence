@@ -50,6 +50,15 @@ test('API server returns stable hardening responses for protected writes', async
   assert.equal(health.headers.get('referrer-policy'), 'no-referrer');
 });
 
+test('API health is also available under the Vercel function prefix', async (t) => {
+  const server = createApiServer({ allowInsecureDevHeaders: true });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/health`);
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+});
+
 test('API server persists a created project through the injected repository', async (t) => {
   let persisted;
   const server = createApiServer({

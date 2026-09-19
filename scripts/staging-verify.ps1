@@ -14,8 +14,17 @@ function Get-Json([string]$Url, [hashtable]$Headers = @{}) {
   [pscustomobject]@{ Status = [int]$response.StatusCode; Headers = $response.Headers; Body = $response.Content }
 }
 
-$health = Get-Json "$base/health"
-if ($health.Status -ne 200) { throw "Health check failed with HTTP $($health.Status)." }
+$health = $null
+foreach ($healthPath in @('/health', '/api/health')) {
+  try {
+    $candidate = Get-Json "$base$healthPath"
+    if ($candidate.Status -eq 200) { $health = $candidate; break }
+  } catch {
+    $statusCode = $_.Exception.Response.StatusCode.value__
+    if ($statusCode -ne 404) { throw }
+  }
+}
+if (-not $health) { throw 'Health check failed: neither /health nor /api/health returned HTTP 200.' }
 if ($health.Headers['x-content-type-options'] -ne 'nosniff') { throw 'Missing x-content-type-options security header.' }
 if (-not $health.Headers['x-request-id']) { throw 'Missing x-request-id correlation header.' }
 Write-Output "Health OK: HTTP $($health.Status), request ID $($health.Headers['x-request-id'])"

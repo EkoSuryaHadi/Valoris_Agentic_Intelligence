@@ -82,6 +82,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 24 forecast/EVM persistence increment | Implemented | `ForecastRepository` and `EvmRepository` persist ETC/EAC/VAC and PV/EV/AC performance snapshots with API-generated IDs; Human-in-the-Loop approval remains unchanged |
 | Phase 24 MVP-C persistence increment | Implemented | `ChangeRepository`, `RiskRepository`, `FindingRepository`, and `CashFlowRepository` persist change, risk, human-reviewed finding, and cash-flow snapshots; `AuditRepository` records human decisions |
 | Phase 25 release completion | In progress | Migration 007, staging runbook, and release evidence are prepared; real Vercel identity/storage/queue credentials and deployed UAT remain external gates |
+| Vercel health-route compatibility | Implemented | API accepts both `/health` and `/api/health`; staging verification automatically supports Vercel function-prefix routing |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

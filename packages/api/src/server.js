@@ -20,7 +20,7 @@ export function createApiServer({ projectStore = [], wbsStore = [], baselineStor
     response.setHeader('x-content-type-options', 'nosniff');
     response.setHeader('referrer-policy', 'no-referrer');
     response.setHeader('cache-control', 'no-store');
-    if (request.method === 'GET' && request.url === '/health') { response.writeHead(200); response.end(JSON.stringify({ status: 'ok' })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 200 }); return; }
+    if (request.method === 'GET' && (request.url === '/health' || request.url === '/api/health')) { response.writeHead(200); response.end(JSON.stringify({ status: 'ok' })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 200 }); return; }
     if (request.method === 'GET') {
       try {
         const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });

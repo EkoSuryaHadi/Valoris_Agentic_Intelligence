@@ -28,7 +28,7 @@ Web and API preview deployments are ready on Vercel. Neon is selected as the sta
 - Inspect URL: `https://vercel.com/ekosuryahadis-projects/valoris-api/BuB9Pzey9iWJfzSD9c1e6m6eao9y`
 - Deployment type: preview
 
-The API adapter exposes `/health` through a Vercel Node Function. Authenticated routes require `AUTH_JWKS_URL`, `AUTH_ISSUER_URL`, and `AUTH_AUDIENCE` in Vercel environment variables. The adapter now loads the seeded PostgreSQL snapshot at cold start and persists project, WBS, baseline, transaction, forecast, and EVM writes through PostgreSQL repositories; external identity, storage, queue, and final staging verification remain release gates.
+The API adapter exposes `/health` and `/api/health` through a Vercel Node Function so both local and function-prefixed deployments can be checked. Authenticated routes require `AUTH_JWKS_URL`, `AUTH_ISSUER_URL`, and `AUTH_AUDIENCE` in Vercel environment variables. The adapter now loads the seeded PostgreSQL snapshot at cold start and persists project, WBS, baseline, transaction, forecast, and EVM writes through PostgreSQL repositories; external identity, storage, queue, and final staging verification remain release gates.
 
 The first CLI deployment was automatically assigned a production target by Vercel because the project had no prior deployment. It is not treated as the VALORIS production release. Subsequent validation uses the explicit preview deployment above.
 
