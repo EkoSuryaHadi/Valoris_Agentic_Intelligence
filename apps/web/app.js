@@ -62,6 +62,8 @@ function startWorkspace(documentRef) {
   const commitmentForm = documentRef.querySelector('[data-commitment-form]');
   const actualCostForm = documentRef.querySelector('[data-actual-cost-form]');
   const transactionFeedback = documentRef.querySelector('[data-transaction-feedback]');
+  const accrualForm = documentRef.querySelector('[data-accrual-form]');
+  const accrualFeedback = documentRef.querySelector('[data-accrual-feedback]');
   let previewRows;
   const importCommitButton = importForm ? documentRef.createElement('button') : null;
   if (importCommitButton) { importCommitButton.type = 'button'; importCommitButton.className = 'secondary-button'; importCommitButton.textContent = 'Commit validated rows →'; importCommitButton.disabled = true; importCommitButton.dataset.importCommit = 'true'; importForm.append(importCommitButton); }
@@ -187,6 +189,16 @@ function startWorkspace(documentRef) {
       if (transactionFeedback) transactionFeedback.textContent = 'Posting actual cost…';
       try { await client.postActualCost(periodId, payload, globalThis.crypto?.randomUUID?.()); actualCostForm.reset(); if (transactionFeedback) transactionFeedback.textContent = 'Actual cost posted to the open period.'; } catch (error) { if (transactionFeedback) transactionFeedback.textContent = error.message || 'The actual cost could not be posted.'; }
     });
+    accrualForm?.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!activeProject) { if (accrualFeedback) accrualFeedback.textContent = 'Choose an authorized project before recording an accrual.'; return; }
+      const data = new FormData(accrualForm);
+      const periodId = data.get('periodId')?.trim();
+      const payload = { sourceRef: data.get('sourceRef')?.trim(), amount: Number(data.get('amount')) };
+      if (!periodId || !payload.sourceRef || !Number.isFinite(payload.amount) || payload.amount < 0) { if (accrualFeedback) accrualFeedback.textContent = 'Period, source reference, and a non-negative amount are required.'; return; }
+      if (accrualFeedback) accrualFeedback.textContent = 'Saving accrual…';
+      try { await client.createAccrual(periodId, payload, globalThis.crypto?.randomUUID?.()); accrualForm.reset(); if (accrualFeedback) accrualFeedback.textContent = 'Accrual saved as draft with source trace.'; } catch (error) { if (accrualFeedback) accrualFeedback.textContent = error.message || 'The accrual could not be saved.'; }
+    });
     importForm?.addEventListener('submit', async (event) => {
       event.preventDefault();
       if (!activeProject) { if (importFeedback) importFeedback.textContent = 'Choose an authorized project before previewing rows.'; return; }
@@ -234,6 +246,7 @@ function startWorkspace(documentRef) {
     importForm?.addEventListener('submit', (event) => { event.preventDefault(); if (importFeedback) importFeedback.textContent = 'Connect to an authorized project workspace to preview import rows.'; });
     commitmentForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to record a commitment.'; });
     actualCostForm?.addEventListener('submit', (event) => { event.preventDefault(); if (transactionFeedback) transactionFeedback.textContent = 'Connect to an authorized project workspace to post actual cost.'; });
+    accrualForm?.addEventListener('submit', (event) => { event.preventDefault(); if (accrualFeedback) accrualFeedback.textContent = 'Connect to an authorized project workspace to record an accrual.'; });
   }
 }
 

@@ -182,3 +182,19 @@ test('API server creates a scoped commitment and posts actual cost', async (t) =
   assert.equal(commitmentStore.length, 1);
   assert.equal(actualStore.length, 1);
 });
+
+test('API server creates an accrual only in an open period', async (t) => {
+  const accrualStore = [];
+  const server = createApiServer({
+    tokenVerifier: async () => ({ userId: 'u1', organizationId: 'o1', projectId: 'p1', role: 'COST_ENGINEER' }),
+    projectStore: [{ id: 'p1', organizationId: 'o1', code: 'P-1', name: 'Northstar' }],
+    periodStore: [{ id: 'r1', projectId: 'p1', status: 'OPEN' }],
+    accrualStore
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  t.after(() => server.close());
+  const response = await fetch(`http://127.0.0.1:${server.address().port}/api/v1/periods/r1/accruals`, { method: 'POST', headers: { authorization: 'Bearer verified-token', 'idempotency-key': 'accrual-1', 'content-type': 'application/json' }, body: JSON.stringify({ sourceRef: 'GRN-2', amount: 800 }) });
+  assert.equal(response.status, 201);
+  assert.equal((await response.json()).data.status, 'DRAFT');
+  assert.equal(accrualStore[0].periodId, 'r1');
+});

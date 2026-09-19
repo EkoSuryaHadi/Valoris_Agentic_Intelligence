@@ -53,6 +53,7 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | MVP-A import commit workspace | Implemented | `packages/api/src/server.js`, `apps/web/app.js`; all-or-nothing commit enabled only after a valid preview and human action |
 | MVP-A import upload and mapping stepper | Implemented | `apps/web/index.html`, `apps/web/app.js`; CSV upload, reference/amount mapping, and handoff into validation preview |
 | MVP-B commitment and actual-cost write adapters | Implemented | `packages/api/src/server.js`, `apps/web/api-client.js`; tenant-scoped, idempotent writes against project and open reporting period |
+| MVP-B accrual draft workspace | Implemented | `packages/api/src/server.js`, `apps/web/index.html`, `apps/web/app.js`; source-backed accrual drafts are restricted to open periods and remain human-controlled |
 | MVP-A budget-line API boundary | Implemented | `packages/api/src/server.js`, `apps/web/api-client.js`; project-scoped budget-line creation with baseline, WBS, cost-code, and amount guardrails |
 | Provider-backed JWT/JWKS verification | Implemented | `packages/api/src/auth.js`; bearer auth is required unless explicit insecure development mode is enabled |
 | API request hardening | Implemented | `packages/api/src/http-hardening.js`, `packages/api/src/server.js`; bounded JSON bodies and per-client rate-limit response |

@@ -31,6 +31,7 @@ export function createApiClient({ baseUrl = '', tokenProvider = () => '', reques
     transitionBaseline: (baselineId, body, idempotencyKey) => request(`/baselines/${encodeURIComponent(baselineId)}/transition`, { method: 'POST', body, idempotencyKey }),
     createCommitment: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/commitments`, { method: 'POST', body, idempotencyKey }),
     postActualCost: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/actual-costs`, { method: 'POST', body, idempotencyKey }),
+    createAccrual: (periodId, body, idempotencyKey) => request(`/periods/${encodeURIComponent(periodId)}/accruals`, { method: 'POST', body, idempotencyKey }),
     previewImport: (projectId, body) => request(`/projects/${encodeURIComponent(projectId)}/imports/preview`, { method: 'POST', body }),
     commitImport: (projectId, body, idempotencyKey) => request(`/projects/${encodeURIComponent(projectId)}/imports/commit`, { method: 'POST', body, idempotencyKey })
   };
