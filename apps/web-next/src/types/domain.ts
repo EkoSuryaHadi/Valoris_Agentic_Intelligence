@@ -96,9 +96,11 @@ export interface Forecast {
 }
 
 export interface EvmMetrics {
-  id: string;
-  project_id: string;
+  id?: string;
+  project_id?: string;
+  projectId?: string;
   period_id?: string;
+  periodId?: string;
   pv: number;
   ev: number;
   ac: number;
@@ -107,10 +109,13 @@ export interface EvmMetrics {
   cv: number;
   sv: number;
   bac: number;
-  etc: number;
-  eac: number;
-  tcpi: number;
+  etc?: number;
+  eac?: number;
+  vac?: number;
+  tcpi?: number;
   created_at?: string;
+  createdAt?: string;
+  [key: string]: any;
 }
 
 export interface ChangeOrder {
