@@ -42,3 +42,30 @@ test('transaction repository preserves API-generated ids', async () => {
   assert.equal((await repo.postActual({ id: 'a1', projectId: 'p1', periodId: 'r1', amount: 10, sourceRef: 'A-1' })).id, 'a1');
   assert.equal((await repo.createAccrual({ id: 'r1', projectId: 'p1', periodId: 'r1', amount: 10, sourceRef: 'G-1' })).id, 'r1');
 });
+
+test('domain repositories list records for a project with parameterization', async () => {
+  const queryLogs = [];
+  const fakeClient = {
+    query: async (text, values) => {
+      queryLogs.push({ text, values });
+      return { rows: [{ id: 'record-1', project_id: values[0] }] };
+    }
+  };
+
+  const hierarchy = new HierarchyRepository(fakeClient);
+  const baseline = new BaselineRepository(fakeClient);
+  const transaction = new TransactionRepository(fakeClient);
+
+  const nodes = await hierarchy.list('wbs_nodes', 'p-1');
+  assert.equal(nodes.length, 1);
+  assert.match(queryLogs[0].text, /select \* from wbs_nodes where project_id = \$1/);
+
+  const baselines = await baseline.list('p-1');
+  assert.equal(baselines.length, 1);
+  assert.match(queryLogs[1].text, /select \* from baselines where project_id = \$1/);
+
+  const commitments = await transaction.listCommitments('p-1', { limit: 10, offset: 0 });
+  assert.equal(commitments.length, 1);
+  assert.match(queryLogs[2].text, /select \* from commitments where project_id = \$1/);
+});
+

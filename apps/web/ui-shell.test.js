@@ -45,9 +45,14 @@ test('MVP-A UI shell is workspace-first and contains core navigation surfaces', 
   assert.match(html, /data-finding-review-form/);
   assert.match(html, /data-transaction-feedback/);
   assert.doesNotMatch(html, /chatbot|chat with/i);
-  assert.match(css, /--sidebar:\s*#0F172A/i);
-  assert.match(css, /--canvas:\s*#F8FAFC/i);
-  assert.match(css, /--primary:\s*#4F46E5/i);
+  assert.match(css, /--sidebar:\s*#1B2B31/i);
+  assert.match(css, /--canvas:\s*#F8F5EF/i);
+  assert.match(css, /--primary:\s*#D4871C/i);
+  assert.match(css, /\.state-loading/);
+  assert.match(css, /\.state-empty/);
+  assert.match(css, /\.state-error/);
+  assert.match(css, /\.state-stale/);
+  assert.match(css, /\.state-locked/);
   const app = await readFile(new URL('./app.js', import.meta.url), 'utf8');
   assert.match(app, /addEventListener\('hashchange'/);
 });

@@ -24,34 +24,53 @@ paths:
     post: {summary: Validate import rows without committing, responses: {'200': {description: Preview result}, '400': {description: Invalid JSON}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Import validation failed}, '429': {description: Rate limited}}}
   /projects/{projectId}/imports/commit:
     post: {summary: Commit a fully valid import preview, responses: {'201': {description: Imported}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope or capability denied}, '422': {description: Import contains invalid rows}, '429': {description: Rate limited}}}
+  /projects/{projectId}/cost-codes:
+    get: {summary: List project-scoped cost codes with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
+  /projects/{projectId}/periods:
+    get: {summary: List project reporting periods with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /projects/{projectId}/commitments:
+    get: {summary: List project commitments with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create a project-scoped commitment, responses: {'201': {description: Created}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Commitment validation failed}, '429': {description: Rate limited}}}
+  /projects/{projectId}/actual-costs:
+    get: {summary: List project actual costs with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /periods/{periodId}/actual-costs:
     post: {summary: Post actual cost to an open reporting period, responses: {'201': {description: Posted}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Actual cost validation failed}, '429': {description: Rate limited}}}
+  /projects/{projectId}/accruals:
+    get: {summary: List project accruals with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /periods/{periodId}/accruals:
     post: {summary: Create a draft accrual for an open reporting period, responses: {'201': {description: Created}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Accrual validation failed}, '429': {description: Rate limited}}}
+  /projects/{projectId}/forecasts:
+    get: {summary: List project forecast snapshots with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /periods/{periodId}/forecast:
     post: {summary: Calculate a forecast snapshot for an open reporting period, responses: {'200': {description: Calculated}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Forecast validation failed}, '429': {description: Rate limited}}}
+  /projects/{projectId}/evm-snapshots:
+    get: {summary: List project EVM performance snapshots with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /periods/{periodId}/evm:
     post: {summary: Calculate an earned value snapshot for an open reporting period, responses: {'200': {description: Calculated}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: EVM validation failed}, '429': {description: Rate limited}}}
   /projects/{projectId}/changes:
+    get: {summary: List project change register with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create a potential change with weighted exposure, responses: {'201': {description: Created}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Change validation failed}, '429': {description: Rate limited}}}
   /changes/{changeId}/incorporate:
     post: {summary: Incorporate an approved change with manager authorization, responses: {'200': {description: Incorporated}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Scope or capability denied}, '422': {description: Change is not approved}, '429': {description: Rate limited}}}
   /projects/{projectId}/cash-flow:
+    get: {summary: List project cash flow snapshots with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Calculate aligned planned versus actual cash variance, responses: {'200': {description: Calculated}, '400': {description: Invalid JSON}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Cash series validation failed}}}
   /projects/{projectId}/risks:
+    get: {summary: List project risk register with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create a weighted project risk, responses: {'201': {description: Created}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Risk validation failed}}}
   /projects/{projectId}/agent-findings:
+    get: {summary: List evidence-linked agent findings with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
     post: {summary: Create an evidence-linked agent finding, responses: {'201': {description: Created}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '422': {description: Finding validation failed}}}
   /agent-findings/{findingId}/review:
     post: {summary: Record a human disposition for an agent finding, responses: {'200': {description: Reviewed}, '400': {description: Invalid JSON or missing idempotency key}, '401': {description: Unauthenticated}, '403': {description: Scope or human capability denied}, '422': {description: Review validation failed}}}
+  /projects/{projectId}/audit-events:
+    get: {summary: List project audit trail events with pagination, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
   /projects/{projectId}/cost-summary:
-    get: {summary: Reconciled BAC/current budget/commitment/AC/ETC/EAC/VAC, responses: {'200': {description: OK}}}
-  /projects/{projectId}/agent-findings:
-    get: {summary: Evidence-linked findings, responses: {'200': {description: OK}}}
-  /agent-findings/{findingId}/review:
-    post: {summary: Human disposition; never auto-approves source data, responses: {'200': {description: Reviewed}}}
+    get: {summary: Reconciled BAC/current budget/commitment/AC/ETC/EAC/VAC and project health, responses: {'200': {description: OK}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}}}
+  /projects/{projectId}/agents/{agentName}/run:
+    post: {summary: Execute deterministic rule surveillance agent and persist findings, responses: {'200': {description: Executed}, '400': {description: Agent run failed}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '404': {description: Project not found}}}
+  /projects/{projectId}/advisor:
+    post: {summary: Sumopod OpenAI-compatible read-only project controls advisory inquiry, responses: {'200': {description: Advisory generated}, '401': {description: Unauthenticated}, '403': {description: Project scope denied}, '404': {description: Project not found}, '500': {description: Advisor model fault}}}
 components:
   securitySchemes:
     bearerAuth: {type: http, scheme: bearer, bearerFormat: JWT}

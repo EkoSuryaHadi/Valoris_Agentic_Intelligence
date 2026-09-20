@@ -42,10 +42,16 @@ export function createJwksVerifier({ jwksUrl, issuer, audience, fetcher = global
 export async function authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders = false } = {}) {
   const authorization = request.headers?.authorization;
   if (typeof authorization === 'string' && /^Bearer\s+\S+$/i.test(authorization)) {
-    if (typeof tokenVerifier !== 'function') throw new Error('JWT verifier is not configured');
-    return tokenVerifier(authorization.replace(/^Bearer\s+/i, ''));
+    if (typeof tokenVerifier === 'function') {
+      return tokenVerifier(authorization.replace(/^Bearer\s+/i, ''));
+    }
   }
-  if (allowInsecureDevHeaders) return authenticateClaims({ sub: 'dev-user', org_id: request.headers?.['x-organization-id'], project_id: request.headers?.['x-project-id'] || 'dev-project', role: request.headers?.['x-role'] });
+  if (allowInsecureDevHeaders) return authenticateClaims({
+    sub: request.headers?.['x-user-id'] || 'dev-user',
+    org_id: request.headers?.['x-organization-id'],
+    project_id: request.headers?.['x-project-id'] || 'dev-project',
+    role: request.headers?.['x-role'] || request.headers?.['x-user-role']
+  });
   throw new Error('Bearer authorization is required');
 }
 

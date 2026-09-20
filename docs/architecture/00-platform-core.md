@@ -29,11 +29,15 @@ Platform Core owns identity context, tenancy, project context, master data, auth
 
 Identity provider, object storage for import artifacts, relational database, event bus, and observability platform.
 
-## Initial decisions pending
+## Architectural Decisions (Confirmed)
 
-- Identity provider
-- Database engine
-- Event transport
-- Object storage provider
-- Tenant isolation strategy
-- Deployment topology
+- **Database Engine**: Neon PostgreSQL with parameterized, SQL-injection safe repository queries (`packages/db/src/`).
+- **Tenant Isolation Strategy**: Application-level query scoping by `organization_id` and `project_id`, enforcing 403 `PROJECT_SCOPE_DENIED` boundaries on all API routes.
+- **Frontend Architecture**: Modern React 19 + TypeScript + Vite SPA (`apps/web-next`) with Industrial Editorial design system and 14 dedicated project control screens.
+- **Agentic Subsystem**:
+  - Centralized `AgentRegistry` managing 5 deterministic rule surveillance agents (`CostMonitorAgent`, `BudgetVarianceAgent`, `CommitmentGapAgent`, `PeriodStalenessAgent`, `AnomalyDetectorAgent`).
+  - Strict Human-in-the-Loop (HITL) review gates for all agent findings; agents are read-only observers and cannot directly approve or mutate ledgers.
+- **LLM Advisory Provider**: Sumopod OpenAI-compatible API (`https://ai.sumopod.com/v1`, `gpt-4o-mini`).
+  - Read-only explanation and recommendation persona.
+  - Cites specific ledger evidence and control accounts.
+  - Offline simulation fallback when API keys are unconfigured.

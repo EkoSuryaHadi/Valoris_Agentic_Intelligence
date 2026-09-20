@@ -40,13 +40,15 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | PostgreSQL pool and project repository | Foundation implemented | `packages/db`, runtime tests |
 | Frontend runtime MVP-A shell | Implemented | `apps/web/index.html`, `apps/web/styles.css`, `apps/web/app.js` |
 | MVP-A read API boundary | Implemented | `packages/api/src/server.js`; tenant-scoped projects plus project-scoped WBS/baseline reads |
+| Complete Project Read Endpoints & Pagination | Completed | `packages/api/src/routes.js`, `packages/db/src/read-queries.js`, `packages/db/src/domain-repositories.js`, `docs/api/openapi.yaml`; 13 paginated GET endpoints for cost codes, periods, commitments, actuals, accruals, forecasts, EVM, changes, risks, findings, cash flow, audit, and cost summary |
+| API router & middleware modularization | Completed | `packages/api/src/router.js`, `packages/api/src/middleware.js`, `packages/api/src/routes.js`, `packages/api/src/server.js`; parameterized routing, composable auth/rateLimit/body chain, thin server wiring (57 lines) |
 | MVP-A browser API client | Implemented | `apps/web/api-client.js`; bearer, request ID, idempotency, and structured error boundary |
 | MVP-A active project context | Implemented | `apps/web/project-context.js`, `apps/web/app.js`; selection constrained to tenant-scoped API results |
 | MVP-A WBS creation API | Implemented | `packages/api/src/server.js`; authenticated, project-scoped, role-gated WBS creation with idempotency and hierarchy validation |
 | MVP-A WBS creation workspace | Implemented | `apps/web/index.html`, `apps/web/app.js`; human-confirmed root-node form bound to the active authorized project |
 | MVP-A baseline draft API | Implemented | `packages/api/src/server.js`; role-gated, project-scoped draft creation with sequential versioning |
 | MVP-A baseline draft workspace | Implemented | `apps/web/index.html`, `apps/web/app.js`; human-triggered draft creation with inline outcome and refresh |
-| Approved UI/UX design token migration | In progress | `apps/web/styles.css`; aligned to VALORIS UI/UX Design Specification v1.0: navy shell, cool canvas, indigo primary, semantic states |
+| Approved UI/UX design token migration | Completed | `apps/web/styles.css`, `.impeccable.md`; reconciled to industrial editorial direction: warm paper canvas (`#F8F5EF`), dark ink teal sidebar (`#1B2B31`), warm amber primary (`#D4871C`), navy typography (`#243047`), and standard state classes (`.state-loading`, `.state-empty`, `.state-error`, `.state-stale`, `.state-locked`) |
 | MVP-A budget-line entry workspace | Implemented | `apps/web/index.html`, `apps/web/app.js`; human-controlled 2-column entry form bound to the active open baseline |
 | MVP-A baseline review workflow | Implemented | `packages/api/src/server.js`, `apps/web/app.js`; role-gated approval/lock transition with mandatory audit reason and inline human decision form |
 | MVP-A import preview workspace | Implemented | `packages/api/src/server.js`, `apps/web/app.js`; validation-first preview with valid/error/total summary and no commit side effect |
@@ -81,8 +83,12 @@ Every code, API, database, UI, agentic, security, or deployment change must upda
 | Phase 24 transaction persistence increment | Implemented | `TransactionRepository` persists commitments, actual costs, and accruals with open-period and source-reference guards |
 | Phase 24 forecast/EVM persistence increment | Implemented | `ForecastRepository` and `EvmRepository` persist ETC/EAC/VAC and PV/EV/AC performance snapshots with API-generated IDs; Human-in-the-Loop approval remains unchanged |
 | Phase 24 MVP-C persistence increment | Implemented | `ChangeRepository`, `RiskRepository`, `FindingRepository`, and `CashFlowRepository` persist change, risk, human-reviewed finding, and cash-flow snapshots; `AuditRepository` records human decisions |
-| Phase 25 release completion | In progress | Migration 007, staging runbook, and release evidence are prepared; real Vercel identity/storage/queue credentials and deployed UAT remain external gates |
 | Vercel health-route compatibility | Implemented | API accepts both `/health` and `/api/health`; staging verification automatically supports Vercel function-prefix routing |
+| Fase 3 Frontend Migration (React 19 + Vite + TypeScript) | Completed | `apps/web-next`; 14 screens (11 migrated + Executive Cockpit, Agent Intelligence Center, Report Catalog), strict Industrial Editorial tokens, SVG S-Curve, Trend sparklines, DataTable with pagination/sorting, 5 UI state patterns |
+| Fase 4 Agent Runtime & Sumopod LLM Integration | Completed | `packages/domain/src/agents/`, `packages/api/src/routes.js`; 5 deterministic rule surveillance agents (CostMonitor, BudgetVariance, CommitmentGap, PeriodStaleness, AnomalyDetector), AgentRegistry, Sumopod OpenAI-compatible read-only LLM adapter, HITL review actions |
+| Fase 5 Test Hardening & Verification Gates | Completed | `packages/api/test/contract-openapi.test.js`, `packages/api/test/e2e-controls-workflow.test.js`, `apps/web-next/test/ui-next.test.js`, `docs/testing/quality-gates.md`; OpenAPI contract match, 15-stage E2E project control lifecycle, 148 passing tests (100%) |
+| Fase 6 Production Hardening & Real-Time Events | Completed | `packages/api/src/routes.js`, `packages/api/src/events.js`, `packages/api/src/middleware.js`, `packages/api/test/production-hardening.test.js`; `/health/deep` memory/uptime/DB diagnostics, structured JSON logging with durationMs/x-request-id/scope correlation, SSE real-time stream (`/api/v1/projects/:projectId/events`) |
+| Architectural Stack Decisions | Enforced | Backend: Node.js + Neon PostgreSQL (Supabase dropped, RLS deferred; app-level tenant/project parameterization strictly enforced). LLM: Sumopod OpenAI-compatible read-only advisory (`gpt-4o-mini`). Human-in-the-loop (HITL) mandatory for all agent findings. |
 
 The implementation map is a status snapshot, not a replacement for module-level acceptance criteria.
 

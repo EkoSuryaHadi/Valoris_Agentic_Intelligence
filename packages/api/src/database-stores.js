@@ -12,7 +12,9 @@ const tableStores = {
   evm_snapshots: 'evmStore',
   changes: 'changeStore',
   risks: 'riskStore',
-  agent_findings: 'findingStore'
+  agent_findings: 'findingStore',
+  cash_flow_snapshots: 'cashFlowStore',
+  audit_events: 'auditStore'
 };
 
 function toCamelCase(value) {

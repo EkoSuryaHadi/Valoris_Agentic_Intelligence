@@ -14,6 +14,8 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm --prefix apps/web-next install
+      - run: npm run build
       - run: npm run test:all
       - run: npm run security:scan
       - run: npm audit --audit-level=high

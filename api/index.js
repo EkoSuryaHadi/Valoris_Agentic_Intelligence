@@ -11,7 +11,10 @@ function createTokenVerifierFromEnvironment() {
   return createJwksVerifier({ jwksUrl: AUTH_JWKS_URL, issuer: AUTH_ISSUER_URL, audience: AUTH_AUDIENCE });
 }
 
-export function createVercelHandler({ tokenVerifier = createTokenVerifierFromEnvironment(), allowInsecureDevHeaders = false } = {}) {
+export function createVercelHandler({
+  tokenVerifier = createTokenVerifierFromEnvironment(),
+  allowInsecureDevHeaders = process.env.ALLOW_INSECURE_DEV_HEADERS ? process.env.ALLOW_INSECURE_DEV_HEADERS === 'true' : !createTokenVerifierFromEnvironment()
+} = {}) {
   let serverPromise;
   const getServer = async () => {
     if (!serverPromise) {

@@ -1,0 +1,114 @@
+:root {
+  /* Canonical Design System Tokens */
+  --color-amber: #D4871C;
+  --color-dark-ink-teal: #1B2B31;
+  --color-warm-paper: #F8F5EF;
+  --color-ink: #243047;
+
+  /* Surface & Base Palette — Industrial Editorial */
+  --sidebar: #1B2B31;
+  --sidebar-hover: #243941;
+  --sidebar-active: #2A4046;
+  --sidebar-border: #33494E;
+  --sidebar-text: #D7E1DF;
+  --sidebar-muted: #8D9B9D;
+  --sidebar-accent: #F0B15A;
+
+  --canvas: #F8F5EF;
+  --paper: var(--canvas);
+  --card: #FFFDF9;
+  --surface: var(--card);
+  --surface-alt: #F1ECE1;
+
+  --line: #E2DBD0;
+  --line-subtle: #EDF0EC;
+  --line-dark: #CFC5B7;
+  --color-warm-border: #E2DBD0;
+
+  /* Typography & Ink */
+  --ink: #243047;
+  --ink-strong: #17233A;
+  --ink-soft: #4A617F;
+  --muted: #6B7B8C;
+  --muted-light: #9AA5A1;
+
+  /* Neutral Slate Palette */
+  --color-slate-50: #F8FAFC;
+  --color-slate-100: #F1F5F9;
+  --color-slate-200: #E2E8F0;
+  --color-slate-300: #CBD5E1;
+  --color-slate-400: #94A3B8;
+  --color-slate-500: #64748B;
+  --color-slate-600: #475569;
+  --color-slate-700: #334155;
+  --color-slate-800: #1E293B;
+  --color-slate-900: #0F172A;
+
+  /* Fonts */
+  --font-sans: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Primary Brand Signal — Warm Amber */
+  --primary: #D4871C;
+  --primary-hover: #B8741A;
+  --primary-soft: #FFF7E8;
+  --primary-border: #F1DFC2;
+  --primary-shadow: rgba(212, 135, 28, 0.18);
+  --amber: var(--primary);
+  --amber-soft: var(--primary-soft);
+  --amber-border: var(--primary-border);
+
+  /* Semantic Signal Colors */
+  --success: #2E7D47;
+  --success-soft: #EDF7EE;
+  --success-text: #4C7759;
+  --green: var(--success);
+  --green-soft: var(--success-soft);
+
+  --warning: #C27803;
+  --warning-soft: #FFF8E6;
+  --warning-text: #98611E;
+
+  --danger: #C0392B;
+  --danger-soft: #FDF2F2;
+  --danger-text: #A95249;
+  --red: var(--danger);
+  --red-soft: var(--danger-soft);
+
+  --info: #2B6CB0;
+  --info-soft: #EFF6FF;
+  --info-text: #47718A;
+  --blue: var(--info);
+  --blue-soft: var(--info-soft);
+
+  /* Spacing Scale */
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 0.75rem;  /* 12px */
+  --space-4: 1rem;     /* 16px */
+  --space-5: 1.25rem;  /* 20px */
+  --space-6: 1.5rem;   /* 24px */
+  --space-8: 2rem;     /* 32px */
+  --space-10: 2.5rem;  /* 40px */
+  --space-12: 3rem;    /* 48px */
+
+  /* Geometry & Layout */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-input: 6px;
+  --radius-button: 6px;
+  --radius-card: 10px;
+  --radius-badge: 4px;
+  --sidebar-width: 250px;
+  --topbar-height: 64px;
+
+  /* Shadows & Elevation */
+  --shadow-sm: 0 1px 2px 0 rgba(27, 43, 49, 0.05);
+  --shadow: 0 1px 3px rgba(36, 48, 71, 0.06), 0 1px 2px rgba(36, 48, 71, 0.04);
+  --shadow-md: 0 4px 6px -1px rgba(27, 43, 49, 0.08), 0 2px 4px -1px rgba(27, 43, 49, 0.04);
+  --shadow-lg: 0 10px 25px -3px rgba(27, 43, 49, 0.1), 0 4px 6px -2px rgba(27, 43, 49, 0.05);
+}

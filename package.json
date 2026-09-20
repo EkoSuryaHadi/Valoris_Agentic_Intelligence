@@ -2,13 +2,19 @@
   "name": "valoris-agentic-intelligence",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "apps/web-next"
+  ],
   "scripts": {
     "test:web": "node --test apps/web/*.test.js",
+    "test:web-next": "node --test apps/web-next/test/*.test.js",
     "test:api": "node --test packages/api/test/*.test.js",
     "test:db": "node --test packages/db/test/*.test.js",
     "test:domain": "node --test packages/domain/test/*.test.js",
-    "test:all": "npm run test:web && npm run test:api && npm run test:db && npm run test:domain",
-    "build": "node scripts/build-check.mjs",
+    "test:all": "npm run test:web && npm run test:web-next && npm run test:api && npm run test:db && npm run test:domain",
+    "build:check": "node scripts/build-check.mjs",
+    "build:web": "npm --prefix apps/web-next run build",
+    "build": "npm run build:check && npm run build:web",
     "security:scan": "node scripts/security-scan.mjs",
     "test": "npm run test:all"
   },

@@ -1,342 +1,61 @@
 import { createServer } from 'node:http';
-import { createProjectResponse } from './projects.js';
-import { createHierarchyResponse } from './hierarchy.js';
-import { createBaselineResponse, createBudgetLineResponse, transitionBaselineResponse } from './baseline.js';
-import { validateImportResponse, commitImportResponse, createFindingResponse, reviewFindingResponse } from './agent-import.js';
-import { createCommitmentResponse, postActualResponse, createAccrualResponse } from './transactions.js';
-import { calculateForecastResponse } from './forecast.js';
-import { calculateEvmResponse } from './evm.js';
-import { createChangeResponse, incorporateChangeResponse } from './change.js';
-import { cashSummaryResponse, createRiskResponse } from './risk-cash.js';
-import { authenticateRequest } from './auth.js';
-import { createRateLimiter, parseJsonBody } from './http-hardening.js';
-import { getRequestId } from './http-hardening.js';
+import { createRouter } from './router.js';
+import { compose, createRateLimitMiddleware, createBodyParseMiddleware, createAuthMiddleware, sendError } from './middleware.js';
+import { registerRoutes } from './routes.js';
+import { createRateLimiter, getRequestId } from './http-hardening.js';
+import { defaultProjectEventBus } from './events.js';
 
-export function createApiServer({ projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [], budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [], accrualStore = [], forecastStore = [], evmStore = [], changeStore = [], riskStore = [], findingStore = [], cashFlowStore = [], auditStore = [], periodStore = [], persistence = {}, tokenVerifier, allowInsecureDevHeaders = false, bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {} } = {}) {
+export function createApiServer({
+  projectStore = [], wbsStore = [], baselineStore = [], costCodeStore = [],
+  budgetLineStore = [], importStore = [], commitmentStore = [], actualStore = [],
+  accrualStore = [], forecastStore = [], evmStore = [], changeStore = [],
+  riskStore = [], findingStore = [], cashFlowStore = [], auditStore = [],
+  periodStore = [], persistence = {}, tokenVerifier, allowInsecureDevHeaders = false,
+  bodyLimitBytes = 1_048_576, rateLimiter = createRateLimiter(), logger = () => {},
+  eventBus = defaultProjectEventBus
+} = {}) {
+  const router = createRouter();
+  const stores = {
+    projectStore, wbsStore, baselineStore, costCodeStore, budgetLineStore,
+    importStore, commitmentStore, actualStore, accrualStore, forecastStore,
+    evmStore, changeStore, riskStore, findingStore, cashFlowStore, auditStore, periodStore
+  };
+
+  registerRoutes(router, {
+    stores,
+    persistence,
+    eventBus,
+    auth: createAuthMiddleware({ tokenVerifier, allowInsecureDevHeaders }),
+    rateLimit: createRateLimitMiddleware(rateLimiter),
+    parseBody: createBodyParseMiddleware(bodyLimitBytes)
+  });
+
   return createServer(async (request, response) => {
+    const startTime = Date.now();
     const requestId = getRequestId(request);
     response.setHeader('x-request-id', requestId);
     response.setHeader('content-type', 'application/json');
     response.setHeader('x-content-type-options', 'nosniff');
     response.setHeader('referrer-policy', 'no-referrer');
     response.setHeader('cache-control', 'no-store');
-    if (request.method === 'GET' && (request.url === '/health' || request.url === '/api/health')) { response.writeHead(200); response.end(JSON.stringify({ status: 'ok' })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 200 }); return; }
-    if (request.method === 'GET') {
-      try {
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const url = new URL(request.url, 'http://localhost');
-        if (url.pathname === '/api/v1/projects') {
-          const data = projectStore.filter((project) => project.organizationId === user.organizationId);
-          response.writeHead(200); response.end(JSON.stringify({ data })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 200 }); return;
-        }
-        const match = url.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/(wbs|baselines)$/);
-        if (match) {
-          if (user.projectId !== match[1]) { response.writeHead(403); response.end(JSON.stringify({ error: { code: 'PROJECT_SCOPE_DENIED', message: 'project scope is not authorized' } })); return; }
-          const data = match[2] === 'wbs' ? wbsStore.filter((node) => node.projectId === match[1]) : baselineStore.filter((baseline) => baseline.projectId === match[1]);
-          response.writeHead(200); response.end(JSON.stringify({ data })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 200 }); return;
-        }
-      } catch {
-        response.writeHead(401); response.end(JSON.stringify({ error: { code: 'UNAUTHENTICATED', message: 'valid bearer authentication is required' } })); return;
-      }
+
+    const url = new URL(request.url, 'http://localhost');
+    const matched = router.match(request.method, url.pathname);
+    const context = {
+      request, response, requestId, logger, startTime, eventBus,
+      params: matched.params,
+      idempotencyKey: request.headers['idempotency-key']
+    };
+
+    if (!matched.handlers) {
+      return sendError(context, { status: 404, code: 'NOT_FOUND', message: 'route not found' });
     }
-    const writeUrl = new URL(request.url, 'http://localhost');
-    const wbsMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/wbs$/);
-    const baselineMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/baselines$/);
-    const lineMatch = writeUrl.pathname.match(/^\/api\/v1\/baselines\/([^/]+)\/lines$/);
-    const transitionMatch = writeUrl.pathname.match(/^\/api\/v1\/baselines\/([^/]+)\/transition$/);
-    const importPreviewMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/imports\/preview$/);
-    const importCommitMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/imports\/commit$/);
-    const commitmentMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/commitments$/);
-    const actualMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/actual-costs$/);
-    const accrualMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/accruals$/);
-    const forecastMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/forecast$/);
-    const evmMatch = writeUrl.pathname.match(/^\/api\/v1\/periods\/([^/]+)\/evm$/);
-    const changeMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/changes$/);
-    const incorporateMatch = writeUrl.pathname.match(/^\/api\/v1\/changes\/([^/]+)\/incorporate$/);
-    const cashFlowMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/cash-flow$/);
-    const riskMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/risks$/);
-    const findingMatch = writeUrl.pathname.match(/^\/api\/v1\/projects\/([^/]+)\/agent-findings$/);
-    const findingReviewMatch = writeUrl.pathname.match(/^\/api\/v1\/agent-findings\/([^/]+)\/review$/);
-    if (request.method === 'POST' && riskMatch) {
-      try {
-        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === riskMatch[1]);
-        const result = createRiskResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.risk?.create) await persistence.risk.create(result.body.data); riskStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
-      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
+
+    try {
+      const runChain = compose(...matched.handlers.slice(0, -1));
+      await runChain(context, matched.handlers[matched.handlers.length - 1]);
+    } catch (error) {
+      sendError(context, error);
     }
-    if (request.method === 'POST' && findingMatch) {
-      try {
-        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const project = projectStore.find((candidate) => candidate.id === findingMatch[1]);
-        const result = createFindingResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.finding?.create) await persistence.finding.create(result.body.data); findingStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
-      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
-    }
-    if (request.method === 'POST' && findingReviewMatch) {
-      try {
-        const parsed = await parseJsonBody(request, bodyLimitBytes); const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders }); const finding = findingStore.find((candidate) => candidate.id === findingReviewMatch[1]); const project = projectStore.find((candidate) => candidate.id === finding?.projectId);
-        const result = reviewFindingResponse({ user, project, finding, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { Object.assign(finding, result.body.data); if (persistence.finding?.review) await persistence.finding.review({ id: finding.id, reviewedBy: user.userId, status: finding.status, reason: finding.reason }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'FINDING_REVIEWED', entityType: 'AGENT_FINDING', entityId: finding.id, newValue: result.body.data, reason: finding.reason }); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); return;
-      } catch (error) { const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401; response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); return; }
-    }
-    if (request.method === 'POST' && cashFlowMatch) {
-      try {
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === cashFlowMatch[1]);
-        const result = cashSummaryResponse({ user, project, body: parsed });
-        if (result.status === 200) { const snapshot = { id: crypto.randomUUID(), projectId: project.id, periodId: parsed.periodId ?? null, planned: parsed.planned, actual: parsed.actual, forecast: parsed.forecast ?? [], variance: result.body.data.variance, cumulativeForecast: result.body.data.cumulativeForecast }; if (persistence.cashFlow?.save) await persistence.cashFlow.save(snapshot); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && changeMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === changeMatch[1]);
-        const result = createChangeResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.change?.create) await persistence.change.create(result.body.data); changeStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && incorporateMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const change = changeStore.find((candidate) => candidate.id === incorporateMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === change?.projectId);
-        const result = incorporateChangeResponse({ user, project, change, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { change.status = result.body.data.status; change.approvedCost = result.body.data.approvedCost; if (persistence.change?.incorporate) await persistence.change.incorporate({ id: change.id, approvedCost: change.approvedCost, status: change.status }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'CHANGE_INCORPORATED', entityType: 'CHANGE', entityId: change.id, newValue: result.body.data }); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && commitmentMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === commitmentMatch[1]);
-        const result = createCommitmentResponse({ user, project, existing: commitmentStore, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.commitment) await persistence.transaction.commitment(result.body.data); commitmentStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && actualMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const period = periodStore.find((candidate) => candidate.id === actualMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === period?.projectId);
-        const result = postActualResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.actual) await persistence.transaction.actual(result.body.data); actualStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && accrualMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const period = periodStore.find((candidate) => candidate.id === accrualMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === period?.projectId);
-        const result = createAccrualResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.transaction?.accrual) await persistence.transaction.accrual(result.body.data); accrualStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && forecastMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const period = periodStore.find((candidate) => candidate.id === forecastMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === period?.projectId);
-        const result = calculateForecastResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; if (persistence.forecast?.save) await persistence.forecast.save(result.body.data); forecastStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && evmMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const period = periodStore.find((candidate) => candidate.id === evmMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === period?.projectId);
-        const result = calculateEvmResponse({ user, project, period, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { result.body.data = { id: crypto.randomUUID(), projectId: project.id, periodId: period.id, ...result.body.data }; if (persistence.evm?.save) await persistence.evm.save(result.body.data); evmStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && wbsMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 429 }); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === wbsMatch[1]);
-        const result = createHierarchyResponse({ user, project, existingNodes: wbsStore.filter((node) => node.projectId === wbsMatch[1]), body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) {
-          result.body.data = { id: crypto.randomUUID(), ...result.body.data };
-          if (persistence.hierarchy?.create) await persistence.hierarchy.create(result.body.data);
-          wbsStore.push(result.body.data);
-        }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        const code = error.code || 'UNAUTHENTICATED';
-        const message = status === 401 ? 'valid bearer authentication is required' : error.message;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code, message } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status });
-      }
-      return;
-    }
-    if (request.method === 'POST' && importCommitMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === importCommitMatch[1]);
-        const result = commitImportResponse({ user, project, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) importStore.push(...result.body.data.rows.map((row) => ({ id: crypto.randomUUID(), ...row, projectId: project.id })));
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && importPreviewMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === importPreviewMatch[1]);
-        const result = validateImportResponse({ user, project, body: parsed });
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && transitionMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        if (!parsed.reason?.trim()) { response.writeHead(400); response.end(JSON.stringify({ error: { code: 'AUDIT_REASON_REQUIRED', message: 'audit reason is required' } })); return; }
-        const baseline = baselineStore.find((candidate) => candidate.id === transitionMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === baseline?.projectId);
-        const result = transitionBaselineResponse({ user, project, baseline, nextStatus: parsed.nextStatus, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 200) { const previousStatus = baseline.status; baseline.status = result.body.data.status; result.body.meta.reason = parsed.reason.trim(); if (persistence.baseline?.transition) await persistence.baseline.transition({ id: baseline.id, status: baseline.status }); if (persistence.audit?.record) await persistence.audit.record({ organizationId: user.organizationId, projectId: project.id, actorUserId: user.userId, actorType: 'USER', action: 'BASELINE_TRANSITIONED', entityType: 'BASELINE', entityId: baseline.id, oldValue: { status: previousStatus }, newValue: { status: baseline.status }, reason: parsed.reason.trim() }); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && lineMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const baseline = baselineStore.find((candidate) => candidate.id === lineMatch[1]);
-        const project = projectStore.find((candidate) => candidate.id === baseline?.projectId);
-        const result = createBudgetLineResponse({ user, project, baseline, wbs: wbsStore.find((node) => node.id === parsed.wbsId), costCode: costCodeStore.find((code) => code.id === parsed.costCodeId), amount: parsed.amount, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.baseline?.addLine) await persistence.baseline.addLine(result.body.data); budgetLineStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } }));
-      }
-      return;
-    }
-    if (request.method === 'POST' && baselineMatch) {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); return; }
-        await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const project = projectStore.find((candidate) => candidate.id === baselineMatch[1]);
-        const result = createBaselineResponse({ user, project, existingBaselines: baselineStore.filter((baseline) => baseline.projectId === baselineMatch[1]), idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) { result.body.data = { id: crypto.randomUUID(), ...result.body.data }; if (persistence.baseline?.create) await persistence.baseline.create(result.body.data); baselineStore.push(result.body.data); }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code: error.code || 'UNAUTHENTICATED', message: status === 401 ? 'valid bearer authentication is required' : error.message } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status });
-      }
-      return;
-    }
-    if (request.method === 'POST' && writeUrl.pathname === '/api/v1/projects') {
-      try {
-        const rate = rateLimiter.check(request.socket.remoteAddress || 'unknown');
-        if (!rate.allowed) { response.setHeader('retry-after', String(rate.retryAfterSec)); response.writeHead(429); response.end(JSON.stringify({ error: { code: 'RATE_LIMITED', message: 'too many requests' } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 429 }); return; }
-        const parsed = await parseJsonBody(request, bodyLimitBytes);
-        const user = await authenticateRequest(request, { tokenVerifier, allowInsecureDevHeaders });
-        const result = createProjectResponse({ user, existingProjects: projectStore, body: parsed, idempotencyKey: request.headers['idempotency-key'] });
-        if (result.status === 201) {
-          result.body.data = { id: crypto.randomUUID(), ...result.body.data };
-          if (persistence.project?.create) await persistence.project.create(result.body.data);
-          projectStore.push(result.body.data);
-        }
-        response.writeHead(result.status); response.end(JSON.stringify(result.body)); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: result.status });
-      } catch (error) {
-        const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'INVALID_JSON' ? 400 : 401;
-        const code = error.code || 'UNAUTHENTICATED';
-        const message = status === 401 ? 'valid bearer authentication is required' : error.message;
-        response.writeHead(status); response.end(JSON.stringify({ error: { code, message } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status });
-      }
-      return;
-    }
-    response.writeHead(404); response.end(JSON.stringify({ error: { code: 'NOT_FOUND', message: 'route not found' } })); logger({ event: 'http.request', requestId, method: request.method, path: request.url, status: 404 });
   });
 }
